@@ -431,17 +431,34 @@ void print_struct_L_ordini(void*st){
 void delete_node(list* llist, node* llnode){
 	if(llnode==NULL)
 		return;
-	if(llnode->prev==NULL)
-		return;
-	if(llnode->next==NULL){
-		llnode->prev->next=(node*)NULL;
-		free(llnode);
-		return;
+	Ristorante*r= (Ristorante*)llnode->data;
+	printf("\n NODO DA ELIMINARE: %s, %d\n", r->nome_rist, r->fd_rist);
+	if(llnode->prev==NULL){
+		if(llnode->next==NULL){
+			llist->head=(node*)NULL;
+			llist->tail=(node*)NULL;
+		}else{
+			llist->head=llnode->next;
+		}
 	}
-	
-	llnode->prev->next=llnode->next;
-	free(llnode);
-	llist->size--;
+	else if(llnode->next==NULL){
+		llnode->prev->next=(node*)NULL;
+		llist->tail=(node*)NULL;
+		free(llnode);
+	}
+	else{
+		llnode->prev->next=llnode->next;
+		free(llnode);
+	}
+	if(llist->size>0){
+		llist->size--;
+	}
+	printf("\n NODO ELIMINATO \n");
+	if(llist->head!=NULL){
+		r=(Ristorante*)llist->head->data;
+		printf(" TESTA DELLA LISTA: %s, %d\n", r->nome_rist, r->fd_rist);
+	}
+	return;
 }
 
 
@@ -781,15 +798,4 @@ void FullWrite(int fd,
     if ((fullWrite(fd, buf, count)) == -1)
         perror("Errore nella write.\n");
 }
-
-
-
-
-
-
-
-
-
-
-
 
