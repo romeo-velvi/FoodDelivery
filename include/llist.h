@@ -31,6 +31,14 @@ typedef struct llist
 } list;
 
 
+// STRUCT PROVA
+typedef struct info{
+	int id;
+	int fd;
+	char *c;
+}Info; 
+
+
 /* STRUCT PROTOCLLO */
 
 typedef struct Prodotto{
@@ -115,6 +123,8 @@ void empty_list(list* llist, void (*free_func)(void *data));
 void traverse(list* llist, void (*do_func)(void *data));
 
 
+
+
 /***************************************************
 ** Prototypes for function for protocol.  		  **
 **                                                **
@@ -128,6 +138,7 @@ void traverse(list* llist, void (*do_func)(void *data));
 void delete_node(list* llist, node* llnode);
 
 // funzioni per creare gli oggetti
+Info* create_Info(int id, int fd, char*c); //tmplt
 Prodotto* create_Prodotto (char *items, float prezzo);
 Ristorante* create_Ristorante (char*nome_R, int fd_rist);
 Ordine* create_Ordine (char*items,int qt);
@@ -136,6 +147,7 @@ Richiesta* create_Richiesta(char *n, int a, int b, int c);
 L_ordini* create_L_ordini(list*l, char *c, int s, int fd_rider);
 
 // funzioni per cancellare gli oggetti
+void free_Info(void* data); //tmplt
 void free_Prodotto(void*data);
 void free_Ristorante(void*data);
 void free_Ordine(void*data);
@@ -144,6 +156,7 @@ void free_Richiesta(void*data);
 void free_L_ordini(void *data);
 
 // funzioni per stampare i risultati dei dati passati
+void print_struct_Info(void*data); //tmplt
 void print_struct_Prodotto(void*data);
 void print_struct_Ristorante(void*data);
 void print_struct_Ordine(void*data);
@@ -187,7 +200,7 @@ Richiesta* find_id_request(list *l, char*id);
 // ritorna il nodo nella lista che ha id pari a quello dato {#SREVER}
 node* find_id_request_node(list*l, char*id);
 
-// cerca tra i l_o con fd pari a quello dato come argomento. {#RISTORANTE}
+// cerca tra i l_o con fd pari a quello dato come argomento.
 L_ordini* find_l_ordine(list*l, char *id);
 
 //* FULL READ & FULL WRITE*//
@@ -198,3 +211,4 @@ ssize_t fullWrite(int fd, const void * buf, size_t count);
 
 
 #endif
+

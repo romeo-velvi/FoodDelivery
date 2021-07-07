@@ -1,0 +1,251 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <sys/wait.h>
+#include <math.h>
+#include <signal.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <netdb.h>
+#include "llist.h"
+#include <sys/mman.h>
+#include <semaphore.h>
+
+//MI FOTTE I DATI NELLA RECIVE NEL THREAD QUANDO CERCO DI RICAVARMI IL PACCHETTO INFO DA DARE IN PASTO
+
+// server su macchina locale
+
+/* 
+	Quando i client si connettono 
+	inviano un numero generato casualmente
+		se è il client1 salverà le info in list_1
+		se è il client2 salverà le info in list_2
+*/
+
+
+typedef struct data_t{
+	int hold;
+	int connfd;	
+}Data_t;
+
+void* thread_function(void*args);
+
+
+int listenfd;
+int cnt1;
+int cnt2;
+int *sig;
+list* my_list_1;
+list* my_list_2;
+
+int main(int argc, char ** argv) {
+	 
+// INIZIALIZZARE LE SOCKET
+    int listenfd;
+    if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket fd1");
+        exit(1);
+    }
+// ISTANZIARE UNA SOCKET
+    struct sockaddr_in servaddr1;
+    servaddr1.sin_family = AF_INET;
+    servaddr1.sin_port = htons(2001);
+    servaddr1.sin_addr.s_addr = htonl(INADDR_ANY);
+// RESUSE ADDR E PORT    
+    int enable=1;
+    if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEADDR, &enable, sizeof(int)) < 0){
+    	perror("setsockopt->ADDR fd1");
+    	exit(1);
+    }
+    if(setsockopt(listenfd, SOL_SOCKET,SO_REUSEPORT, &enable, sizeof(int)) < 0){
+    	perror("setsockopt->PORT fd1");
+    	exit(1);
+    }
+// BIND
+    if (bind(listenfd, (struct sockaddr *) &servaddr1, sizeof(servaddr1)) < 0) {
+        perror("bind fd1");
+        exit(1);
+    }
+// LISTEN
+    if (listen(listenfd, 300) < 0) {
+        perror("listen fd1");
+        exit(1);
+    }
+    
+    int  connfd;
+    struct sockaddr_in clientaddr;
+    socklen_t size= sizeof(clientaddr);
+    pid_t pid, masterpid;
+    
+   	my_list_1 = create_list();
+   	my_list_2 = create_list();
+   	
+   	int cnt1=0;
+	int cnt2=0;
+	
+	push_front(my_list_1, create_Info(11, 11, "aa"));
+	push_front(my_list_2, create_Info(22, 22, "aa"));
+	
+	int hold;
+	int ccc=0;
+	
+	// dichiarazione e inizializzazione disponibilità thread	
+	int k=3; // n thread
+	pthread_t tid1[k]; 
+	sig=malloc(k*sizeof(int));
+	for (int i=0;i<k;i++){
+		sig[k]=0;
+	}
+	int l;
+	
+	Data_t dd;
+
+    printf("\n SOCKET ATTIVA \n");
+    
+    while (ccc<30) {
+		
+		//printf("\n___ entro nel while %d___\n",ccc);
+	 	
+	 	printf("\n bloccato sull'accept (%d)\n",ccc);
+	 	connfd = accept(listenfd, (struct sockaddr *) &clientaddr, &size);
+	 	//printf("\n accetto connessione");
+	   	
+	   	// controlla quale thread è disponibile consultando l'array delle flag: 0 libero, -1 occupato
+	   	
+	   	printf("\n inizio controllo thread libero");
+	   	l=-1;
+	   	while(sig[ccc%k]==-1 && l==-1){ // thread ccc%k non disponibile
+	   		l=0;
+	   		while(sig[l%k]==-1){
+	   			l++;
+	   		}
+	   	}
+		if(l==-1)
+			hold=ccc%k;
+		else
+			hold=l%k;
+		sig[hold]=-1;
+		printf("\n thread libero trovato: %d, lo setto occupato", hold);
+	
+		// istanzio le variabili personali da passare al thread
+		dd.hold=hold;
+		dd.connfd=connfd;
+		
+		//printf("\n inizializzazione thread");
+		pthread_create( &tid1[hold], NULL, thread_function, (void*) &dd);
+		//pthread_join(tid1[hold], (void * ) NULL);
+
+	    
+		ccc++;
+	}
+	
+	close(listenfd);
+	printf("\n Uscito dalla socket");
+	
+	
+	char cmd;
+	while(1){
+		printf("\n inserire il comando lista: ");
+	    scanf("%c",&cmd);
+	    if(cmd=='1'){
+	    	printf("\nstampo lista 1:");
+	    	traverse(my_list_1,print_struct);
+	    }
+	    else if (cmd =='2'){
+	    	printf("\nstampo lista 2:");
+	    	traverse(my_list_2,print_struct);
+	    }
+	    else if (cmd =='3'){
+	    	printf("\nesco");
+	    	break;
+	    }
+	    else{
+	    	printf("\n COMANDO NON RICONOSCIUTO");
+	    }
+	    fflush(stdin);
+	}
+	
+	printf("\n chiusura del server");
+	
+	exit(1);
+}
+
+
+
+
+void* thread_function (void *args){
+			
+			printf("\n inizio thread:");
+			
+			Data_t *d = (Data_t*) args;		
+			//printf("\n assegnazione args");
+		
+			char *stringa = malloc(256*sizeof(char));
+			int type;
+			int ok=0;
+			int connfd = d->connfd;
+			int ho = d->hold;
+			int x;
+	    	
+	    	// controlla che tipo di client sei:
+	    	read(connfd, &type, sizeof(type));
+	    	
+	    	// leggo il dato in input
+	    	read(connfd, stringa, sizeof(stringa));
+	    	
+	    	// invio il dato ok -> il client aspetta 10 secondi, per vedere se la send viene letta in asincronia
+	    	send(connfd, &ok, sizeof(int), 0); // invio ok, e si spegne
+	    	
+	    	// calcolo struttura
+
+	    	
+	    	if(my_list_2==NULL){
+	    		printf("-----> la lista è vuota");
+	    	}
+	    	
+	    	if(type == 1){ // client tipo 1
+	    		printf("\n Client tipo 1 in connessione...");
+	    		x= cnt1++;
+	    		push_front(my_list_1,create_Info(x, connfd, stringa));
+	    	}
+	    	
+	    	else if (type == 2){ // client tipo 2
+				printf("\n Client tipo 2 in connessione...");
+				x = cnt2++;
+				push_front(my_list_2,create_Info(x, connfd, stringa));	
+			}
+	    	
+	    	else{ // client non riconosciuto
+	    		printf("\n Tipo non riconosciuto, connessione non accettata! \n");
+	    		close(connfd);  
+	    		return (void*)NULL;
+	    	}
+	    	//printf("\n operazioni di listing riuscite");
+	    	close(connfd);  
+	    	printf("\n Client elaborato");
+	  	
+	  	sig[ho]=0;
+	  	
+	  	/*
+	  	printf("\n ##### stampo lista");
+	    	traverse(my_list_2,print_struct);
+	  	
+	  	//printf("\n Esco dal thread %d e lo setto dinuovo disponibile", d->hold);
+	  	*/
+	  	
+	  	 pthread_exit((void * ) NULL);
+}
+
+
+
+
+
