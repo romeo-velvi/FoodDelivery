@@ -54,24 +54,24 @@ typedef struct rider{
 } Rider;
 
 
-typedef struct richiesta { //Tiene traccia delle richieste client-ristorante nel server
-	char id_richiesta[id_size];
+typedef struct operazione { //Tiene traccia delle richieste client-ristorante nel server
+	char id_Operazione[id_size];
     int fd_client;
     int fd_ristorante;
-    int stato_richiesta; 
+    int stato_Operazione; 
 	/*
 		SE LO STATO E UGUALE A:
-			1:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa richiesta del menu ricevuto dal ristorante.
+			1:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa Operazione del menu ricevuto dal ristorante.
 			2:  ->	per indicare che il serve prende il ristorante (indicato dal campo "ristorante") e gli inoltre l'ordine ricevuto dal client.
 			3:  ->  per indicare che il serve prende il client (indicato dal campo "client") e gli inoltre l'id del rider ricevuto dal ristorante.
 			4:  ->  vuol dire che l'ordine è in fase di consegna
 	*/
-} Richiesta;
+} Operazione;
 
 
 typedef struct lista_ordini{
 	list* ordini;
-	char id_richiesta[id_size]; //per identificarla nel server.
+	char id_Operazione[id_size]; //per identificarla nel server.
 	int fd_rider; // rider che effettuerà la consegna
 	int stato_ordine;
 	/*
@@ -130,7 +130,7 @@ Prodotto* create_Prodotto (char *items, float prezzo);
 Ristorante* create_Ristorante (char*nome_R, int fd_rist);
 Ordine* create_Ordine (char*items,int qt);
 Rider* create_Rider (char*id_rider, int fd_rider);
-Richiesta* create_Richiesta(char *n, int a, int b, int c);
+Operazione* create_Operazione(char *n, int a, int b, int c);
 L_ordini* create_L_ordini(list*l, char *c, int s, int fd_rider);
 
 // funzioni per cancellare gli oggetti
@@ -138,7 +138,7 @@ void free_Prodotto(void*data);
 void free_Ristorante(void*data);
 void free_Ordine(void*data);
 void free_Rider(void*data);
-void free_Richiesta(void*data);
+void free_Operazione(void*data);
 void free_L_ordini(void *data);
 
 // funzioni per stampare i risultati dei dati passati
@@ -146,7 +146,7 @@ void print_struct_Prodotto(void*data);
 void print_struct_Ristorante(void*data);
 void print_struct_Ordine(void*data);
 void print_struct_Rider(void*data);
-void print_struct_Richiesta(void*data);
+void print_struct_Operazione(void*data);
 void print_struct_L_ordini(void*data);
 
 
@@ -167,14 +167,14 @@ char *rand_string(char *str, size_t size);
 node* find_resturant_by_name (list*l,char*nome_rist);
 node* find_resturant_by_fd (list*l, int fd);
 
-// cerca la richiesta dato l'fd del client {#SERVER}
-Richiesta* find_resturant_request(list *l,int fd,int st); // ritorna fd ristorante
+// cerca la Operazione dato l'fd del client {#SERVER}
+Operazione* find_resturant_request(list *l,int fd,int st); // ritorna fd ristorante
 
-// cerca la richiesta dato l'fd del ristorante {#SERVER}
-Richiesta* find_client_request(list *l,int fd,int st); // ritorna fd client
+// cerca la Operazione dato l'fd del ristorante {#SERVER}
+Operazione* find_client_request(list *l,int fd,int st); // ritorna fd client
 
-// cerca la richiesta dato l'id della richiesta {#SERVER}
-Richiesta* find_id_request(list *l, char*id);
+// cerca la Operazione dato l'id della Operazione {#SERVER}
+Operazione* find_id_request(list *l, char*id);
 
 // ritorna il nodo nella lista che ha id pari a quello dato {#SREVER}
 node* find_id_request_node(list*l, char*id);

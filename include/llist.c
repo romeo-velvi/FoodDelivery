@@ -275,18 +275,18 @@ Rider* create_Rider (char*id_rider, int fd_rider){
 
 
 
-Richiesta* create_Richiesta (char *n, int a, int b, int c){
-    Richiesta* p = (Richiesta*) malloc(sizeof(Richiesta));
-	stpcpy(p->id_richiesta,n);
+Operazione* create_Operazione (char *n, int a, int b, int c){
+    Operazione* p = (Operazione*) malloc(sizeof(Operazione));
+	stpcpy(p->id_Operazione,n);
     p->fd_client=a;
     p->fd_ristorante=b;
-    p->stato_richiesta=c;
+    p->stato_Operazione=c;
     return p;
 }
 
 L_ordini* create_L_ordini (list *l, char *c, int s, int x){
     L_ordini* p = (L_ordini*) malloc(sizeof(L_ordini));
-	strcpy(p->id_richiesta,c);
+	strcpy(p->id_Operazione,c);
     p->ordini=l;
     p->stato_ordine=s;
 	p->fd_rider=x;
@@ -332,8 +332,8 @@ void free_Rider(void*data){
 }
 
 
-void free_Richiesta(void*data){
-	Richiesta *p = (Richiesta*) data;
+void free_Operazione(void*data){
+	Operazione *p = (Operazione*) data;
     free(p);
 }
 
@@ -392,12 +392,12 @@ void print_struct_Rider(void*st){
 }
 
 
-void print_struct_Richiesta(void*st){
+void print_struct_Operazione(void*st){
     if (st == NULL) 
         return;
-    Richiesta *tmp = (Richiesta*)st;
-	printf("\n richiesta id:%s",tmp->id_richiesta);
-    printf("fd_client:%d, fd_ristorante:%d, stato:%d\n",tmp->fd_client,tmp->fd_ristorante,tmp->stato_richiesta);
+    Operazione *tmp = (Operazione*)st;
+	printf("\n Operazione id:%s",tmp->id_Operazione);
+    printf("fd_client:%d, fd_ristorante:%d, stato:%d\n",tmp->fd_client,tmp->fd_ristorante,tmp->stato_Operazione);
 }
 
 void print_struct_L_ordini(void*st){
@@ -408,7 +408,7 @@ void print_struct_L_ordini(void*st){
 	node*tmp=l->head;
 	printf("\nStato ordine: %d\n",lo->stato_ordine);
 	int i=0;
-	printf("\nOrdinazione %s",lo->id_richiesta);
+	printf("\nOrdinazione %s",lo->id_Operazione);
 	while(tmp!=NULL){
 		Ordine*o=tmp->data;
 		printf("\n[%d] Piatto: %s, quantità :%d\n",i,o->items, o->qt);
@@ -593,57 +593,57 @@ node* find_resturant_by_fd (list*l,int fd_rist){
 
 
 
-Richiesta* find_resturant_request(list *l,int fd,int st){
+Operazione* find_resturant_request(list *l,int fd,int st){
 	if(l==NULL)
-		return (Richiesta*)NULL;
+		return (Operazione*)NULL;
 	node*n=l->head;
-	Richiesta *r;
+	Operazione *r;
 	while(n!=NULL){
-		r=(Richiesta*)n->data;
-		if(r->fd_client==fd && r->stato_richiesta==st){
+		r=(Operazione*)n->data;
+		if(r->fd_client==fd && r->stato_Operazione==st){
 			return r;
 		}
 		n=n->next;
 	}
 	printf("\n--------->Nodo non trovato\n");
-	return (Richiesta*)NULL;
+	return (Operazione*)NULL;
 }
 
 
 
 
-Richiesta* find_client_request(list *l,int fd,int st){
+Operazione* find_client_request(list *l,int fd,int st){
 	if(l==NULL)
-		return (Richiesta*)NULL;
+		return (Operazione*)NULL;
 	node*n=l->head;
-	Richiesta *r;
+	Operazione *r;
 	while(n!=NULL){
-		r=(Richiesta*)n->data;
-		if(r->fd_ristorante==fd && r->stato_richiesta==st){
+		r=(Operazione*)n->data;
+		if(r->fd_ristorante==fd && r->stato_Operazione==st){
 			return r;
 		}
 		n=n->next;
 	}
 	printf("\n--------->Nodo non trovato\n");
-	return (Richiesta*)NULL;
+	return (Operazione*)NULL;
 }
 
 
 
-Richiesta* find_id_request(list *l,char* id){
+Operazione* find_id_request(list *l,char* id){
 	if(l==NULL)
-		return (Richiesta*)NULL;
+		return (Operazione*)NULL;
 	node*n=l->head;
-	Richiesta *r;
+	Operazione *r;
 	while(n!=NULL){
-		r=(Richiesta*)n->data;
-		if(strcmp(r->id_richiesta,id)==0){
+		r=(Operazione*)n->data;
+		if(strcmp(r->id_Operazione,id)==0){
 			return r;
 		}
 		n=n->next;
 	}
 	printf("\n--------->Nodo non trovato\n");
-	return (Richiesta*)NULL;
+	return (Operazione*)NULL;
 }
 
 
@@ -652,10 +652,10 @@ node* find_id_request_node(list*l, char*id){
 	if(l==NULL)
 		return (node*)NULL;
 	node*n=l->head;
-	Richiesta *r;
+	Operazione *r;
 	while(n!=NULL){
-		r=(Richiesta*)n->data;
-		if(strcmp(r->id_richiesta,id)==0){
+		r=(Operazione*)n->data;
+		if(strcmp(r->id_Operazione,id)==0){
 			return n;
 		}
 		n=n->next;
@@ -674,7 +674,7 @@ L_ordini* find_l_ordine(list*l, char *id){
 	L_ordini *r;
 	while(n!=NULL){
 		r=(L_ordini*)n->data;
-		if(strcmp(r->id_richiesta,id)==0){
+		if(strcmp(r->id_Operazione,id)==0){
 			return r;
 		}
 		n=n->next;

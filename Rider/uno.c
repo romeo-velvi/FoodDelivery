@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
 		
     int n, cnt, verify;
     int var = 0, consegnaEffettuata = 0;
-	char id_cliente[id_size], id_richiesta[id_size];
+	char id_cliente[id_size], id_Operazione[id_size];
     int scelta;
 
 //************************ FINE DICHIARAZIONI  ***********************//
@@ -104,10 +104,10 @@ int main(int argc, char ** argv) {
 		/* invio il mio id_rider al ristorante */
         FullWrite(sockfd, id_rider, sizeof(char)*id_size);
 		
-		/* ricevo l'id relativo all'ordine (e, di conseguenza, collegato alla richiesta del client) */
-		FullRead(sockfd, id_richiesta, sizeof(char)*id_size);
+		/* ricevo l'id relativo all'ordine (e, di conseguenza, collegato alla Operazione del client) */
+		FullRead(sockfd, id_Operazione, sizeof(char)*id_size);
 		
-		printf("Ordine [%s] da consegnare.\n",id_richiesta);
+		printf("Ordine [%s] da consegnare.\n",id_Operazione);
 		
 		/* ricevo l'id del client proprietario dell'ordine in consegna */
         FullRead(sockfd, id_cliente, sizeof(char)*id_size);
@@ -123,8 +123,8 @@ int main(int argc, char ** argv) {
         FullWrite(sockfd, & var, sizeof(int));
         printf("Consegna effettuata al cliente %s.\n", id_cliente);
         
-        /* invio al ristorante la richiesta da "marchiare" in quanto cconsegnata */
-        FullWrite(sockfd, id_richiesta, sizeof(char)*id_size);
+        /* invio al ristorante la Operazione da "marchiare" in quanto cconsegnata */
+        FullWrite(sockfd, id_Operazione, sizeof(char)*id_size);
        
        
     }

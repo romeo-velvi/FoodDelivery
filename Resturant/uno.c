@@ -77,7 +77,7 @@ int main(int argc, char ** argv) {
 	int i,j; //invarianti
     int n, code, numProdotti;
     int fd_client, fd_rider; // fd dei client e dei rider
-	char id_rider[id_size], id_client[id_size], id_richiesta[id_size];
+	char id_rider[id_size], id_client[id_size], id_Operazione[id_size];
     int var, loop;
     int scelta, cnt, x;
 	
@@ -264,18 +264,18 @@ int main(int argc, char ** argv) {
 							/* ricezione della qt di oggetti nell'ordine */
 							FullRead(sockfd,&cnt,sizeof(int));
 							
-							/* recezione dell'id della richiesta ordine*/
-							FullRead(sockfd,id_richiesta,sizeof(char)*id_size);
+							/* recezione dell'id della Operazione ordine*/
+							FullRead(sockfd,id_Operazione,sizeof(char)*id_size);
 							
 							for(int i=0;i<cnt;i++){
 								FullRead(sockfd,&ord,sizeof(ord));
 								push_back(ordini,&ord);
 							}
 						
-						printf("\n Ordine %s di %d elementi ricevuto dal server\n",id_richiesta, cnt);
+						printf("\n Ordine %s di %d elementi ricevuto dal server\n",id_Operazione, cnt);
 						
 						/* aggiunge ordine ricevuto in coda alla lista degli ordini*/
-						push_back(stato_ordini, create_L_ordini(ordini,id_richiesta,0,-1));
+						push_back(stato_ordini, create_L_ordini(ordini,id_Operazione,0,-1));
 						
 						no++; // incrementa il numero degli ordini disponibili al rider;
 						
@@ -313,7 +313,7 @@ int main(int argc, char ** argv) {
 						while(tmp!=NULL && loop==1 && no>0){
 							lo=(L_ordini*)tmp->data;
 							x = lo->stato_ordine;
-							printf("ordine %s = stato %d",lo->id_richiesta,x);
+							printf("ordine %s = stato %d",lo->id_Operazione,x);
 							if(x==0){ // ordine non assegnato a nessun rider -> di conseguenza lo assegno al rider.
 								
 								// setto lo stato ad 1 = "ordine assegnato ad un rider"
@@ -325,8 +325,8 @@ int main(int argc, char ** argv) {
 								// setto l'fd del rider attuale come attributo nella lista ordini
 								lo->fd_rider=ridfd;
 								
-								//copio l'id della richiesta per inviarla al server
-								stpcpy(id_richiesta,lo->id_richiesta);
+								//copio l'id della Operazione per inviarla al server
+								stpcpy(id_Operazione,lo->id_Operazione);
 								
 								loop=0; // esco dal while- interrompo il ciclo
 								
@@ -345,8 +345,8 @@ int main(int argc, char ** argv) {
 							/* allora il rider mi invia il suo id */
 							FullRead(ridfd, id_rider, sizeof(char)*id_size);
 							
-							/* invio l'id_richiesta dell'ordine che ha preso in carico*/
-							FullWrite(ridfd,id_richiesta,sizeof(char)*id_size);
+							/* invio l'id_Operazione dell'ordine che ha preso in carico*/
+							FullWrite(ridfd,id_Operazione,sizeof(char)*id_size);
 							
 						//->	5
 							/* invio al server 5, che significa che un ordine è preso in carico dal rider*/
@@ -356,8 +356,8 @@ int main(int argc, char ** argv) {
 							/* invio id del rider al server */
 							FullWrite(sockfd, id_rider, sizeof(char)*id_size);
 							
-							/* invio id_richiesta presa in carico dal rider */
-							FullWrite(sockfd, id_richiesta, sizeof(char)*id_size);
+							/* invio id_Operazione presa in carico dal rider */
+							FullWrite(sockfd, id_Operazione, sizeof(char)*id_size);
 							
 							/* aspetto che il server mi invii l'id del client che ha effettuato l'ordine */
 							FullRead(sockfd, id_client, sizeof(char)*id_size);
@@ -384,21 +384,21 @@ int main(int argc, char ** argv) {
 					/**** NEL CASO SI RICEVA IL MESSAGGIO 2 VUOL DIRE CHE IL RIDER HA CONSEGNATO */
 					case 2:{
 						
-						/*il rider mi invia un messaggio contenente l'id_richiesta dell'ordine che ha inviato*/
-						FullRead(ridfd, id_richiesta, sizeof(char)*id_size);
+						/*il rider mi invia un messaggio contenente l'id_Operazione dell'ordine che ha inviato*/
+						FullRead(ridfd, id_Operazione, sizeof(char)*id_size);
 						
 				//->	8
 						/* invio al server 8 -> ordine dato al rider consegnato */
 						var = 8;
 						FullWrite(sockfd, & var, sizeof(int));
 						
-						/* invio al server id_richiesta da eliminare */
-						FullWrite(sockfd,id_richiesta,sizeof(char)*id_size);
+						/* invio al server id_Operazione da eliminare */
+						FullWrite(sockfd,id_Operazione,sizeof(char)*id_size);
 						
-						printf("Ordine %s effettuato dal rider: %s, al cliente %s.\n",id_richiesta, id_rider, id_client);
+						printf("Ordine %s effettuato dal rider: %s, al cliente %s.\n",id_Operazione, id_rider, id_client);
 						
 						/* trovo l'ordine in questione e lo setto come consegnato */
-						lo=find_l_ordine(stato_ordini,id_richiesta);
+						lo=find_l_ordine(stato_ordini,id_Operazione);
 						lo->stato_ordine=2; 
 						
 						break;
