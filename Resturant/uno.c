@@ -78,18 +78,14 @@ int main(int argc, char ** argv) {
     int n, code, numProdotti;
     int fd_client, fd_rider; // fd dei client e dei rider
 	char id_rider[id_size], id_client[id_size], id_richiesta[id_size];
-
     int var, loop;
-    void *v;
-	
-    int conf, scelta, cnt, stat,x, consegna;
+    int scelta, cnt, x;
 	
 	node *tmp;
 
-    Ordine *o, oo;
+    Ordine ord;
 	L_ordini *lo;
 	Prodotto p;
-	char mmmm;
 
 
 	char nome_rist[max_name];
@@ -272,8 +268,8 @@ int main(int argc, char ** argv) {
 							FullRead(sockfd,id_richiesta,sizeof(char)*id_size);
 							
 							for(int i=0;i<cnt;i++){
-								FullRead(sockfd,&oo,sizeof(oo));
-								push_back(ordini,&oo);
+								FullRead(sockfd,&ord,sizeof(ord));
+								push_back(ordini,&ord);
 							}
 						
 						printf("\n Ordine %s di %d elementi ricevuto dal server\n",id_richiesta, cnt);

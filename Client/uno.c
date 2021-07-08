@@ -9,13 +9,16 @@
 #include<signal.h>
 #include<time.h>
 #include "../include/llist.h"
-
-void before_close(int sig);
-
 int sockfd;
 
-int main(int argc, char ** argv) {
+void before_close(int sig) {
+    int var = 9;
+    FullWrite(sockfd, & var, sizeof(int));
+    exit(0);
+}
 
+
+int main(int argc, char ** argv) {
 
 /* ##################_INZIO INIZIALIZZAZIONE_########################## */
     if (argc != 2) {
@@ -23,10 +26,12 @@ int main(int argc, char ** argv) {
         //exit(1);
 		argv[1]="127.0.0.1";
     }
+
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket error\n");
         exit(1);
     }
+
 	struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(1024); // 1024 server; 1025 ristorante
@@ -60,9 +65,9 @@ int main(int argc, char ** argv) {
 	int i,scelta; 
 	int var;
 	
-    node *nn; // variabile nodo 
+    node *nodo; // variabile nodo
     Prodotto *p; 
-    Prodotto pp;
+    Prodotto prod;
     Ordine o;
 	
     char *nome_scelto;
@@ -93,6 +98,7 @@ int main(int argc, char ** argv) {
             FullWrite(sockfd, & type, sizeof(int));
 			
 			/* il server mi risponde con una lista dei ristoranti */
+			/* si riceve il numero dei irsoranti nella lista */
             FullRead(sockfd, & cnt, sizeof(int));
 
 
@@ -115,14 +121,14 @@ int main(int argc, char ** argv) {
 					fflush(stdin);
                     scanf("%d", & scelta);
                     if (scelta < 1 || scelta > 2) 
-						printf("Opzione non disponibile, reinserire: S"); 
+						printf("Opzione non disponibile, reinserire: ");
 					else if ( scelta == 2){
 						before_close(SIGINT); // esci
 					}
                 } while (scelta != 1);
             }
 			
-        } while (loop); // cicla affinchè non abbia scelto il ristorante
+        } while (loop); // cicla affinchè non abbia la lista dei ristoranti
 
 
 		/* funzione che dati i ristoranti, permette di sceglierne uno e di ritornare il fd aperto sul server che gestisce quest'ultimo */
@@ -135,7 +141,6 @@ int main(int argc, char ** argv) {
 
         /* invio il fd del ristorante scelto */
 		FullWrite(sockfd, &fdr, sizeof(int));
-
 		
 		/* in risposta, il server mi inva il numero di prodotti nel menu */
         FullRead(sockfd, & cnt, sizeof(int));
@@ -143,10 +148,10 @@ int main(int argc, char ** argv) {
 		// riceve n pacchetti contenenti i prodotto
 		for(i=0;i<cnt;i++){
 			// riceve il pacchetto
-			FullRead(sockfd,&pp,sizeof(Prodotto));
+			FullRead(sockfd,&prod,sizeof(Prodotto));
 					//p=(Prodotto*)v;
 			// inserire elemento nella lista
-			push_front(menu,create_Prodotto(pp.items,pp.prezzo));
+			push_front(menu,create_Prodotto(prod.items,prod.prezzo));
 		}
 		printf("\nho ricevuto i (%d) prodotti dal server\n",i);
         
@@ -160,19 +165,19 @@ int main(int argc, char ** argv) {
 	//->	4		
 		/* invia un messaggio contenente 4 -> "ti invio l'ordine, aspetto l'fd del rider che mi deve fare la consegna" */
         var = 4;
-        FullWrite(sockfd, & var, sizeof(int));
+        FullWrite(sockfd, &var, sizeof(int));
 		
 		// si ricava il size dell'ordine
 		cnt=size(order);
 		/* invio quanti pacchetti dovrà ricevere */
 		FullWrite(sockfd,&cnt,sizeof(int));
 		// ricezione dei pacchetti contenenti i nomi dei ristoranti
-		nn=order->head;
-		for(int i=0;i<cnt && nn!=NULL;i++){
-			o = *(Ordine*)nn->data;
+		nodo=order->head;
+		for(int i=0;i<cnt && nodo!=NULL;i++){
+			o = *(Ordine*)nodo->data;
 			// invia pacchetto
 			FullWrite(sockfd,&o,sizeof(o));
-			nn=nn->next;
+			nodo=nodo->next;
 		}
 				
 				
@@ -209,10 +214,4 @@ int main(int argc, char ** argv) {
     exit(0);
 } //fine Main
 
-
-void before_close(int sig) {
-    int var = 9;
-    FullWrite(sockfd, & var, sizeof(int));
-    exit(0);
-}
 

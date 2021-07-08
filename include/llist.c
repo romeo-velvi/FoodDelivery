@@ -225,12 +225,7 @@ void traverse(list* llist, void (*do_func)(void *))
 
 
 
-
-
-
-
 /* FUNZIONE DI CREAZIONI ELEMENTI */
-
 
 
 
@@ -447,7 +442,6 @@ void delete_node(list* llist, node* llnode){
 
 
 
-
 int show_choose_resturant(list* llist){
 	// visualizzo Ristorante
 	if(llist==NULL)
@@ -483,6 +477,7 @@ int show_choose_resturant(list* llist){
 
 	return -1;
 }
+
 
 
 
@@ -541,6 +536,8 @@ list* show_choose_product(list* llist){
 }
 
 
+
+
 char *rand_string(char *str, size_t size)
 {
 	srand(time(NULL));
@@ -559,47 +556,6 @@ char *rand_string(char *str, size_t size)
 
 
 
-void send_rider_message(list *llist){
-	/// @todo Implement
-    if (llist == NULL) {
-      return;
-    }
-    //create pointer to traverse the llist from the head
-    node* llnode = llist->head;
-    //traverse the list and complete function on data
-    int type=7;
-    Rider *st;
-    while (llnode != NULL) {
-    	st=(Rider*)llnode->data;
-   		if(send(st->fd_rider, &type, sizeof(int), 0)==sizeof(type)){ //rider non connesso
-   			//lo cancello
-   			printf("\nRider %s scollegato..\n",st->id_rider);
-   			delete_node(llist,llnode);
-   		}
-      
-      	llnode = llnode->next;
-    }
-}
-
-
-Rider* find_Rider(list *llist, int x)
-{
-	// @todo Implement
-    if (llist == NULL) {
-      return (Rider*)NULL;
-    }
-    //create pointer to traverse the llist from the head
-    node* llnode = llist->head;
-    //traverse the list and complete function on data
-    int l=0;
-    Rider *st;
-    while (llnode != NULL && l<x) {
-      	llnode = llnode->next;
-    }
-    return (Rider *) llnode->data;
-}
-
-
 node* find_resturant_by_name (list*l,char*nome_rist){
 	if(l==NULL)
 		return (node*)NULL;
@@ -614,6 +570,8 @@ node* find_resturant_by_name (list*l,char*nome_rist){
 	}
 	return (node*)NULL;
 }
+
+
 
 
 node* find_resturant_by_fd (list*l,int fd_rist){

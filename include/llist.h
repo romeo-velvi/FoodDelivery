@@ -13,9 +13,9 @@
 typedef struct lnode
 {
   struct lnode* prev; 
-  /* Pointer to previous node */
+  /* Pointer nodo precedente */
   struct lnode* next; 
-  /* Pointer to next node */
+  /* Pointer nodo successivo */
   void* data; 
   /* User data */
 } node;
@@ -23,20 +23,12 @@ typedef struct lnode
 typedef struct llist
 {
   struct lnode* head; 
-  /* Head pointer either points to a node with data or NULL */
+  /* puntatore a testa */
   struct lnode* tail; 
-  /* Tail pointer either points to a node with data or NULL */
+  /* puntatore a coda */
   unsigned int size; 
-  /* Size of the linked list */
+  /* Size della linked list */
 } list;
-
-
-// STRUCT PROVA
-typedef struct info{
-	int id;
-	int fd;
-	char *c;
-}Info; 
 
 
 /* STRUCT PROTOCLLO */
@@ -69,10 +61,10 @@ typedef struct richiesta { //Tiene traccia delle richieste client-ristorante nel
     int stato_richiesta; 
 	/*
 		SE LO STATO E UGUALE A:
-			3:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa richiesta del menu ricevuto dal ristorante.
-			4:  ->	per indicare che il serve prende il ristorante (indicato dal campo "ristorante") e gli inoltre l'ordine ricevuto dal client.
-			5:  ->  per indicare che il serve prende il client (indicato dal campo "client") e gli inoltre l'id del rider ricevuto dal ristorante.
-			6:  ->  vuol dire che l'ordine è in fase di consegna
+			1:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa richiesta del menu ricevuto dal ristorante.
+			2:  ->	per indicare che il serve prende il ristorante (indicato dal campo "ristorante") e gli inoltre l'ordine ricevuto dal client.
+			3:  ->  per indicare che il serve prende il client (indicato dal campo "client") e gli inoltre l'id del rider ricevuto dal ristorante.
+			4:  ->  vuol dire che l'ordine è in fase di consegna
 	*/
 } Richiesta;
 
@@ -93,9 +85,7 @@ typedef struct lista_ordini{
 
 /***************************************************
 ** Prototypes for linked list library functions.  **
-**                                                **
-** For more details on their functionality,       **
-** check llist.c.                                 **
+** controlla llist.c.                             **
 ***************************************************/
 
 /* Creating */
@@ -127,9 +117,7 @@ void traverse(list* llist, void (*do_func)(void *data));
 
 /***************************************************
 ** Prototypes for function for protocol.  		  **
-**                                                **
-** For more details on their functionality,       **
-** check llist.c.                                 **
+** controlla llist.c.                             **
 ***************************************************/
 
 /* CONTROLLARE LA CORRISPONDENZA TIPI-DATO E VALORI PASSATI */
@@ -138,7 +126,6 @@ void traverse(list* llist, void (*do_func)(void *data));
 void delete_node(list* llist, node* llnode);
 
 // funzioni per creare gli oggetti
-Info* create_Info(int id, int fd, char*c); //tmplt
 Prodotto* create_Prodotto (char *items, float prezzo);
 Ristorante* create_Ristorante (char*nome_R, int fd_rist);
 Ordine* create_Ordine (char*items,int qt);
@@ -147,7 +134,6 @@ Richiesta* create_Richiesta(char *n, int a, int b, int c);
 L_ordini* create_L_ordini(list*l, char *c, int s, int fd_rider);
 
 // funzioni per cancellare gli oggetti
-void free_Info(void* data); //tmplt
 void free_Prodotto(void*data);
 void free_Ristorante(void*data);
 void free_Ordine(void*data);
@@ -156,7 +142,6 @@ void free_Richiesta(void*data);
 void free_L_ordini(void *data);
 
 // funzioni per stampare i risultati dei dati passati
-void print_struct_Info(void*data); //tmplt
 void print_struct_Prodotto(void*data);
 void print_struct_Ristorante(void*data);
 void print_struct_Ordine(void*data);
@@ -170,7 +155,7 @@ void print_struct_L_ordini(void*data);
 /* §§§§§§§§§§§ ALTRE FUNZIONI UTILI §§§§§§§§§§§*/
 
 // stampa e scelta Ristorante nella list (con arg i nomi dei Ristorante) {#CLIENT}
-int show_choose_resturant(list* llist);  // GLI RITORNA DIRETTAMENTE L'ID
+int show_choose_resturant(list* llist);  // GLI RITORNA DIRETTAMENTE L'FD
 
 // stampa e scelta Prodotti nella list (menu) {#CLIENT}
 list* show_choose_product(list* llist);
@@ -182,17 +167,11 @@ char *rand_string(char *str, size_t size);
 node* find_resturant_by_name (list*l,char*nome_rist);
 node* find_resturant_by_fd (list*l, int fd);
 
-// ritorna Rider nella lista situato alla posizione x {#RISTORANTE}
-Rider* find_Rider(list *llist, int x);
-
-// invia messaggio a tutti i rider {#Ristorante}
-void send_rider_message(list *l);
-
 // cerca la richiesta dato l'fd del client {#SERVER}
-Richiesta* find_resturant_request(list *l,int fd,int st);
+Richiesta* find_resturant_request(list *l,int fd,int st); // ritorna fd ristorante
 
 // cerca la richiesta dato l'fd del ristorante {#SERVER}
-Richiesta* find_client_request(list *l,int fd,int st);
+Richiesta* find_client_request(list *l,int fd,int st); // ritorna fd client
 
 // cerca la richiesta dato l'id della richiesta {#SERVER}
 Richiesta* find_id_request(list *l, char*id);
