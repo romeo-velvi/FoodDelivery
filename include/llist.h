@@ -55,10 +55,10 @@ typedef struct rider{
 
 
 typedef struct operazione { //Tiene traccia delle richieste client-ristorante nel server
-	char id_Operazione[id_size];
+	char id_operazione[id_size];
     int fd_client;
     int fd_ristorante;
-    int stato_Operazione; 
+    int stato_operazione; 
 	/*
 		SE LO STATO E UGUALE A:
 			1:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa Operazione del menu ricevuto dal ristorante.
@@ -71,7 +71,7 @@ typedef struct operazione { //Tiene traccia delle richieste client-ristorante ne
 
 typedef struct lista_ordini{
 	list* ordini;
-	char id_Operazione[id_size]; //per identificarla nel server.
+	char id_operazione[id_size]; //per identificarla nel server.
 	int fd_rider; // rider che effettuerà la consegna
 	int stato_ordine;
 	/*
