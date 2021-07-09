@@ -646,7 +646,7 @@ node* find_id_operation_node(list*l, char*id){
 
 
 
-Info_ordine* find_l_ordine(list*l, char *id){
+Info_ordine* find_Info_ordine(list*l, char *id){
 	
 	if(l==NULL)
 		return (Info_ordine*)NULL;

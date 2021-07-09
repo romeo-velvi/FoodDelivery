@@ -153,37 +153,40 @@ void print_struct_Info_ordine(void*data);
 
 /* §§§§§§§§§§§ ALTRE FUNZIONI UTILI §§§§§§§§§§§*/
 
-// stampa e scelta Ristorante nella list (con arg i nomi dei Ristorante) {#CLIENT}
-int show_choose_resturant(list* llist);  // GLI RITORNA DIRETTAMENTE L'FD
+// stampa e scelta Ristorante nella list { usata dal CLIENTE}
+int show_choose_resturant(list* llist);  // ritorna direttamente l'fd
 
-// stampa e scelta Prodotti nella list (menu) {#CLIENT}
-list* show_choose_product(list* llist);
+// stampa e scelta Prodotti nella list (menu) {usata dal CLIENTE}
+list* show_choose_product(list* llist); // ritorna la lista contenente l’ordine
 
-// generare un stringa random {#SERVER} {#RIDER}
+// generare un stringa random
 char *rand_string(char *str, size_t size);
 
-// Function che cerca nella lista di Ristorante per ritornare il nodo {#SERVER}
-node* find_resturant_by_name (list*l,char*nome_rist);
-node* find_resturant_by_fd (list*l, int fd);
+// Function che cerca nella lista dei ristoranti dato il nome {usata dal SERVER}
+node* find_resturant_by_name (list*l,char*nome_rist); // ritorna il nodo
 
-// cerca la Operazione dato l'fd del client {#SERVER}
+// Function che cerca nella lista dei ristoranti dato l’fd {usata dal SERVER}
+node* find_resturant_by_fd (list*l, int fd); // ritorna il nodo
+
+// cerca l’Operazione dato l'fd del client {usata dal SERVER}
 Operazione* find_resturant_operation(list *l,int fd,int st); // ritorna fd ristorante
 
-// cerca la Operazione dato l'fd del ristorante {#SERVER}
+// cerca l’Operazione dato l'fd del ristorante {usata dal SERVER}
 Operazione* find_client_operation(list *l,int fd,int st); // ritorna fd client
 
-// cerca la Operazione dato l'id della Operazione {#SERVER}
+// cerca l’Operazione dato l'id della Operazione {usata dal SERVER}
 Operazione* find_id_operation(list *l, char*id);
 
-// ritorna il nodo nella lista che ha id pari a quello dato {#SREVER}
+// ritorna il nodo nella lista che ha id pari a quello dato {usata dal SREVER}
 node* find_id_operation_node(list*l, char*id);
 
-// cerca tra i l_o con fd pari a quello dato come argomento.
-Info_ordine* find_l_ordine(list*l, char *id);
+// cerca tra gli info ordini il nodo con fd pari a quello dato come argomento.
+Info_ordine* find_Info_ordine(list*l, char *id);
 
 //* FULL READ & FULL WRITE*//
-void FullRead(int fd, void * buf, size_t count); //funzione per la gestione del valore di ritorno nella fullRead
-void FullWrite(int fd, const void * buf, size_t count); //funzione per la gestione del valore di ritorno nella fullWrite
+void FullRead(int fd, void * buf, size_t count); //funzione wrapper fullRead
+void FullWrite(int fd, const void * buf, size_t count); //funzione wrapper fullWrite
+
 ssize_t fullRead(int fd, void * buf, size_t count);
 ssize_t fullWrite(int fd, const void * buf, size_t count);
 
