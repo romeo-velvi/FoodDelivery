@@ -674,14 +674,15 @@ ssize_t fullRead(int fd, void * buf, size_t count) {
     nleft = count;
     while (nleft > 0) {
         if ((nread = read(fd, buf, nleft)) < 0) {
-
             if (errno == EINTR)
                 continue;
             else
                 exit(nread);
-        } else if (nread == 0) {
+        } 
+        else if (nread == 0) {
             break;
-        } else {
+        } 
+        else {
             nleft -= nread;
             buf += nread;
         }
@@ -695,14 +696,12 @@ ssize_t fullWrite(int fd, const void * buf, size_t count) {
     ssize_t nwritten;
     nleft = count;
     while (nleft > 0) {
-        /* repeat until no left */
         if ((nwritten = write(fd, buf, nleft)) < 0) {
             if (errno == EINTR)
                 continue;
             else exit(nwritten);
 
         }
-
         nleft -= nwritten;
         buf += nwritten;
     }
@@ -710,25 +709,14 @@ ssize_t fullWrite(int fd, const void * buf, size_t count) {
 }
 
 void FullRead(int fd, void * buf, size_t count) {
-    if ((fullRead(fd, buf, count)) == -1)
+    if ((fullRead(fd, buf, count)) == -1){
         perror("Errore nella read.\n");
+    }
 }
 
 void FullWrite(int fd,
     const void * buf, size_t count) {
-    if ((fullWrite(fd, buf, count)) == -1)
+    if ((fullWrite(fd, buf, count)) == -1){
         perror("Errore nella write.\n");
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
