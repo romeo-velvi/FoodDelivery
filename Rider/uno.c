@@ -12,7 +12,7 @@
 int main(int argc, char ** argv) {
 
 	
-/* ##################_INZIO INIZIALIZZAZIONE_########################## */
+/* ##################_INZIO COLLEGAMENTO RISTORANTE_########################## */
     if (argc != 3) {
         fprintf(stderr, "usage: %s <IPaddress> and <port>\n", argv[0]);
         //exit(1);
@@ -35,25 +35,28 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "connect error\n");
         exit(1);
     }
-/* ##################_INZIO INIZIALIZZAZIONE_########################## */
+/* ######################################################################### */
+
 
 //************************ DICHIARAZIONI VARIABILI ***********************//
-	//ID RIDER
-	char id_rider[id_size];
+	
+	char id_rider[id_size];	//ID RIDER
+
 	rand_string(id_rider,id_size);
     printf("RIDER CON ID: %s\n", id_rider);
 		
     int n, cnt, verify;
     int var = 0, consegnaEffettuata = 0;
-	char id_cliente[id_size], id_Operazione[id_size];
+	char id_cliente[id_size], id_operazione[id_size];
     int scelta;
 
-//************************ FINE DICHIARAZIONI  ***********************//
+//***********************************************************************//
 
     while (1) {
 		
         cnt = 0;
         do{
+			
 	//-> 	0
 			/* invia al ristorante 0-> intenzione di sapere quanti ordini ci sono*/  
 			var = 0;
@@ -93,21 +96,24 @@ int main(int argc, char ** argv) {
 		/* invio messaggio 1 al ristorante -> ho intenzione di prendere in carico l'ordine */
         var = 1;
         FullWrite(sockfd, & var, sizeof(int));
-		/* espatta una risposta di riuscita o meno */
+		
+		/* il ristorante invia l'esito */
         FullRead(sockfd, & verify, sizeof(int)); 
+		
         if (verify == 0) { //riceve 1 se un'ordine è ancora disponibile, 0 in caso contrario
             printf("Non è stato possibile prendere in carico un ordine\n");
             continue; // riparte dalla scelta degli ordini
         }
 		
-		// se tutto è andato a buon fine (ho ricevuto 1 alla conferma della "presa" dell'ordine) ed ho preso in carico l'ordine:
+		// se tutto è andato a buon fine ed ho preso in carico l'ordine:
+		
 		/* invio il mio id_rider al ristorante */
         FullWrite(sockfd, id_rider, sizeof(char)*id_size);
 		
 		/* ricevo l'id relativo all'ordine (e, di conseguenza, collegato alla Operazione del client) */
-		FullRead(sockfd, id_Operazione, sizeof(char)*id_size);
+		FullRead(sockfd, id_operazione, sizeof(char)*id_size);
 		
-		printf("Ordine [%s] da consegnare.\n",id_Operazione);
+		printf("Ordine [%s] da consegnare.\n",id_operazione);
 		
 		/* ricevo l'id del client proprietario dell'ordine in consegna */
         FullRead(sockfd, id_cliente, sizeof(char)*id_size);
@@ -117,14 +123,16 @@ int main(int argc, char ** argv) {
 		printf("\nInizio consegna...\n");
 		// simulo invio
 		sleep(5);
+		
+		
 //->	2
 		/* invio messaggio 2 al ristorante -> ho consegnato l'ordine */		
 		var = 2;
         FullWrite(sockfd, & var, sizeof(int));
         printf("Consegna effettuata al cliente %s.\n", id_cliente);
         
-        /* invio al ristorante la Operazione da "marchiare" in quanto cconsegnata */
-        FullWrite(sockfd, id_Operazione, sizeof(char)*id_size);
+        /* invio al ristorante l'id_operazione (che identificava l'ordine) per "settare" come consegnata */
+        FullWrite(sockfd, id_operazione, sizeof(char)*id_size);
        
        
     }

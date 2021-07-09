@@ -20,7 +20,7 @@ void before_close(int sig) {
 
 int main(int argc, char ** argv) {
 
-/* ##################_INZIO INIZIALIZZAZIONE_########################## */
+/* ##################_COLLEGAMENTO SERVER_########################## */
     if (argc != 2) {
         fprintf(stderr, "usage: %s <IPaddress>\n Assegnazione automatica\n\n", argv[0]);
         //exit(1);
@@ -43,17 +43,15 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "connect error\n");
         exit(1);
     }
-/* ##################_FINE  INIZIALIZZAZIONE_########################## */
+/* ############################################################# */
 
 
 //************************ DICHIARAZIONI VARIABILI ***********************//
-//@TODO eliminare alcune fariabili
 
-    //ID CLIENT
-	char id_client[id_size];
+	char id_client[id_size]; //ID CLIENT
 	rand_string(id_client,id_size);
 	printf("BENVENUTO client [%s]\n", id_client);
-	int type=1; // 1= identifica il client nel protocollo
+	int type;
 	
 	//LISTE
 	list* resturant; //per i ristoranti
@@ -78,7 +76,7 @@ int main(int argc, char ** argv) {
     int cnt;
     Ristorante *R;
 	
-    signal(SIGINT, before_close); //gestione segnale SIGINT ->invia prima il messaggio "6" al server ("sono il client, me ne sto andando libera il decrittore che mi hai allocato")
+    signal(SIGINT, before_close); //gestione segnale SIGINT ->invia prima il messaggio "9" al server ("sono il client, me ne sto andando libera il decrittore che mi hai allocato")
 	
 
 //************************* FINE DICHIARAZIONE *****************************//
@@ -91,10 +89,11 @@ int main(int argc, char ** argv) {
     	
         do {
             //system("clear");
+			fdr=-1;
 			
 		//->	1
-			fdr=-1;
-			/* una volta che si connette gli invia un identificativo -> 1 "sono client e aspetto i ristoranti" */
+			/* una volta che si connette con il server gli invia un identificativo -> 1 "sono client e aspetto i ristoranti" */
+			type=1;
             FullWrite(sockfd, & type, sizeof(int));
 			
 			/* il server mi risponde con una lista dei ristoranti */
@@ -162,31 +161,33 @@ int main(int argc, char ** argv) {
 		// stampo order
 		traverse(order,print_struct_Ordine);
 		
-	//->	4		
-		/* invia un messaggio contenente 4 -> "ti invio l'ordine, aspetto l'fd del rider che mi deve fare la consegna" */
-        var = 4;
-        FullWrite(sockfd, &var, sizeof(int));
 		
 		// si ricava il size dell'ordine
 		cnt=size(order);
-		/* invio quanti pacchetti dovrà ricevere */
-		FullWrite(sockfd,&cnt,sizeof(int));
-		// ricezione dei pacchetti contenenti i nomi dei ristoranti
-		nodo=order->head;
-		for(int i=0;i<cnt && nodo!=NULL;i++){
-			o = *(Ordine*)nodo->data;
-			// invia pacchetto
-			FullWrite(sockfd,&o,sizeof(o));
-			nodo=nodo->next;
+		if (cnt>0){
+	//->	4		
+			/* invia un messaggio contenente 4 -> "ti invio l'ordine, aspetto l'fd del rider che mi deve fare la consegna" */
+			var = 4;
+			FullWrite(sockfd, &var, sizeof(int));
+			
+			/* invio il size dell'ordine dovrà ricevere */
+			FullWrite(sockfd,&cnt,sizeof(int));
+			// ricezione dei pacchetti contenenti i nomi dei ristoranti
+			nodo=order->head;
+			for(int i=0;i<cnt && nodo!=NULL;i++){
+				o = *(Ordine*)nodo->data;
+				// invia pacchetto
+				FullWrite(sockfd,&o,sizeof(o));
+				nodo=nodo->next;
+			}
+				
+			/* aspetta la recezione dell'id rider */
+			FullRead(sockfd, id_rider, sizeof(char)*id_size);
+			
+			FullWrite(sockfd, id_client, sizeof(char)*id_size);
+			
+			printf("\nConsegan presa in carica dal rider %s.\n", id_rider);
 		}
-				
-				
-		/* aspetta la recezione dell'id rider */
-        FullRead(sockfd, id_rider, sizeof(char)*id_size);
-        
-        FullWrite(sockfd, id_client, sizeof(char)*id_size);
-		
-        printf("\nConsegan presa in carica dal rider %s.\n", id_rider);
 
         do {
             printf("\nPremi [1] per effettuare un altro ordine");

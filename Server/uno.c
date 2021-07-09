@@ -22,14 +22,14 @@ int main(int argc, char ** argv) {
     struct sockaddr_in serv_add;
     serv_add.sin_family = AF_INET;
     serv_add.sin_port = htons(1024); //porta server
-    serv_add.sin_addr.s_addr = htonl(INADDR_ANY); //INADDR_ANY viene usato come indirizzo del server. L'applicazione accetterà connessioni da qualsiasi indirizzo associato al server
+    serv_add.sin_addr.s_addr = htonl(INADDR_ANY); 
 
     int enable = 1;
-    if (setsockopt(list_fd, SOL_SOCKET, SO_REUSEADDR, & enable, sizeof(int)) < 0) { //permette di riutilizzare lo stesso indirizzo
+    if (setsockopt(list_fd, SOL_SOCKET, SO_REUSEADDR, & enable, sizeof(int)) < 0) {
         perror("setsockopt");
         exit(1);
     }
-    if (setsockopt(list_fd, SOL_SOCKET, SO_REUSEPORT, & enable, sizeof(int)) < 0) { //permette di riutilizzare lo stesso numero di porta
+    if (setsockopt(list_fd, SOL_SOCKET, SO_REUSEPORT, & enable, sizeof(int)) < 0) {
         perror("setsockopt");
         exit(1);
     }
@@ -43,28 +43,31 @@ int main(int argc, char ** argv) {
         perror("listen");
         exit(1);
     }
-/* ##################_FINE CREAZIONE_########################## */
+/* ############################################################################# */
+
 
 //------------------------ DICHIARAZIONE VAR ----------------------//
-	
-	char nome_rist[max_name];
-	int cnt;
-	list* ristoranti = create_list(); // lista ristoranti
-	list* operazioni = create_list(); // lista operazioni
+ 
+	int cnt,i,j,code,var;
 	int fdr, fdc; //fd del ristorante e del client
-	char id_client[id_size], id_rider[id_size], id_Operazione[id_size];  // id del ristorante e del client
+	
+	char id_client[id_size], id_rider[id_size], id_operazione[id_size], nome_rist[max_name];
+	
 	node* RS_node,*tmp; 
-	Ristorante *rs, rist; 
+	Ristorante rist; 
 	Operazione *ope;
 	Prodotto p;
 	Ordine *ord;
-	int i,j; //invariante
-	int code; // codice per gestire il protocollo
-	int var;
+	
+	list* ristoranti = create_list(); // lista ristoranti
+	list* operazioni = create_list(); // lista operazioni
 
-//-------------------- FINE DICHIARAZIONE VAR ----------------------//
+
+//----------------------------------------------------------------//
+
 
 /* ##################_INIZIALIZZAZIONE CAMPI SELECT_########################## */
+
     fd_set rset;
     fd_set allset;
     int client[FD_SETSIZE];
@@ -87,7 +90,8 @@ int main(int argc, char ** argv) {
 
     FD_ZERO( & allset);
     FD_SET(list_fd, &allset);
-/* ##################_FINE INIZIALIZZAZIONE_########################## */
+	
+/* ######################################################################### */
 
 //*****************************_INIZIO_PROTOCOLLO_**************************************************//
 
@@ -95,19 +99,13 @@ int main(int argc, char ** argv) {
         
 		// setta  l’insieme  dei  descrittori  da  controllare  in  lettura
         rset = allset;
-
-        /* 
-          chiama la select: 
-            - esce quando un descrittore è pronto
-            - restituisce il numero di descrittori pronti
-        */
-
+		
+		///* SELECT  *////
         if ((ready = select(maxd + 1, & rset, NULL, NULL, NULL)) < 0)
             perror("errore nella select");
 
-		//* CONTROLLO SE IL DESCRITTORE PER LE CONNESSIONI E PRONTO IN LETTURA *//
-		//* INDICA CHE QUALCUNO VUOLE CONNETTERSI AL SERVER                    *//
-        // FARANNO Operazione SIA I CLIENT CHE I RISTORANTI
+		/* si controlla se il descrittore per le connessioni è pronto in lettura */
+        // I tipo di client che si connetterennao i CLIENTI ed i RISTORANTI
         if (FD_ISSET(list_fd, & rset)) {
             cliaddr_len = sizeof(cliaddr);
             // invoca la accept
@@ -119,16 +117,18 @@ int main(int argc, char ** argv) {
                     client[i] = connfd;
                     break;
           }
+		  
             // se non ci sono posti segnala errore
             if (i == FD_SETSIZE)
                 perror("troppi client");
-
+				
+            // registra il socket ed aggiorna (opportunamente) maxd e maxi
             FD_SET(connfd, & allset);
-            // registra il socket ed aggiorna maxd
             if (connfd > maxd)
                 maxd = connfd;
             if (i > maxi)
                 maxi = i;
+	
             // decrementa il numero di "fd" da leggere (in quanto uno è già stato soddisfatto)
             if (--ready <= 0)
                 continue;
@@ -142,40 +142,37 @@ int main(int argc, char ** argv) {
                 continue;
 
 //*****************************_INIZIO_PROTOCOLLO_******************************************************//
-			//sleep(1);
+				
+			/***********************************************************************/
+			/*** AD OGNI CONNESSIONE INDIPENDENTE DAL CLIENT RICEVE UN MESSAGGIO ***/
+			/*** QUESTO MESSAGGIO CONTIENE IL "COSA DEVE FARE" IL SEREVER **********/
+			/***********************************************************************/
+			
             if (FD_ISSET(sockfd, & rset)) {
-				
-				/***********************************************************************/
-				/*** AD OGNI CONNESSIONE INDIPENDENTE DAL CLIENT RICEVE UN MESSAGGIO ***/
-				/*** QUESTO MESSAGGIO CONTIENE IL "COSA DEVE FARE" IL SEREVER **********/
-            
-				/**** CONTROLLA IL TIPO DI MESSAGGIO IN INGRESSO ***********************/
+				          
+				/** CONTROLLA IL MESSAGGIO IN INGRESSO **/
                 read(sockfd, &code, sizeof(int));
-				printf("\n--------------->CODICE: %d -> fd: %d \n",code, sockfd);
 				
-								// se la coda finisce chiudi
+				//printf("\n--------------->CODICE: %d -> fd: %d \n",code, sockfd);
 
 				switch (code) {
 
 						
-					/**** NEL CASO IN CUI 0 ALLORA IL RISTORANTE SI CONNETTE *****/
+					/** NEL CASO SI RICEVA 0: ALLORA IL RISTORANTE SI CONNETTE **/
 					case 0: {
-						//Riceve la struct ristorante e aggiunge il ristorante alla lista
-						
+						/* si riceve il nome del ristorante e aggiunge il ristorante alla lista */
 						FullRead(sockfd, nome_rist, sizeof(char)*max_name);
 						push_front(ristoranti, create_Ristorante(nome_rist,sockfd));
 						printf("Si è connesso il Ristorante: %s (%d)\n", nome_rist,sockfd);
 						break;
 					}
 					
-					/**** NEL CASO IN CUI 1 ALLORA IL CLIENT SI CONNETTE *************/
+					/** NEL CASO SI RICEVA 1: IL CLIENT SI CONNETTE E VUOLE SAPERE I RISTORANTI ATTIVI **/
 					case 1: {
-						/* invio al client le informazioni sui ristoranti */
-						// mi calcolo quanti ristoranti ci sono
-						cnt=size(ristoranti);
-						//printf("Attualmente ci sono %d ristoranti collegati",cnt);
-						/* invio al client il numero dei ristoranti */
+						/* calcolo ed invio al client il numero dei ristoranti */
+						cnt=size(ristoranti);			
 						FullWrite(sockfd, & cnt, sizeof(int));
+						/* si invia, se ci sono, i ristoranti attivi, uno ad uno, scorrendo la lista */
 						if (cnt > 0) {
 							RS_node=ristoranti->head;
 							for(i=0;i<cnt && RS_node!=NULL;i++){
@@ -188,166 +185,173 @@ int main(int argc, char ** argv) {
 						break;
 					}
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 2 INDICA CHE IL CLIENT HA SCELTO IL RISTORANTE */
+					/** NEL CASO SI RICEVA 2:  INDICA CHE IL CLIENT HA SCELTO IL RISTORANTE **/
 					case 2: {
-						//il cliente, grazie alla struttura inviata, ha automaticamente calcolato l'fd del ristorante
-						FullRead(sockfd, &fdr, sizeof(int));
-
-
+						
 						/***********************************************************************/
-						/*** QUANDO IL CLIENT SCEGLIE IL RISTORANTE SI CREA UNA Operazione   ****/
-						/*** LA Operazione SERVE PER INDICARE E GESTIRE MEGLIO GLI ORDINI  ******/	
-						/*** DA QUI IN POI QUANDO IL CLIENT INTERAGISCE CON IL SERVER SI *******/
-						/*** PRENDERA LA LISTA PER VERIFICARE LO STATO DELLA Operazione  ********/
-						/*** DELL'ORDINE E GESTIRE OGNI CLIENT (DAL CASE 3 IN POI) *************/
-						/********************** IN MODO EFFICIENTE *****************************/	
-						/***********************************************************************/						
+						/*** QUANDO IL CLIENT SCEGLIE IL RISTORANTE SI CREA UNA OPERAZIONE  ****/
+						/*** L'OPERAZIONE SERVE PER INDICARE E GESTIRE MEGLIO GLI ORDINI E *****/	
+						/*** MANTENERE LA TRACCIABILITA' DELLE OPERAZIONE TRA MITTENTE E *******/
+						/*** DESTINATARIO, QUINDI, IL COLLEGAMENTO TRA CLIENTE E RISTORANTE. ***/
+						/*** DA QUI IN POI QUANDO I CLIENT INTERAGISCONO CON IL SERVER SI ******/
+						/*** PRENDERA' LA LISTA PER VERIFICARE LO STATO DELL'OPERAZIONE ********/
+						/*** DELL'ORDINE E GESTIRE OGNI CLIENT IN MODO EFFICIENTE **************/	
+						/***********************************************************************/
 						
-						//crea ed aggiunge una Operazione (fatta dal server al client)
+						//il cliente, grazie alla struttura inviata, ha automaticamente inviato l'fd del ristorante
 						
-						/* 	Il client una volta cliccato il ristorante DEVE ordinare qualcosa*/
-						/* 	Se così non fosse gestire l'evento annulla-scelta (caso 4) 
-							controllando prima il numero degli elementi dell'ordine:
-							se l'ordine presenta un numero di elementi pari a 0, allora 
-							cancella la Operazione del client che si sta creando				*/
+						/* il client invia il ristorante scelto */
+						FullRead(sockfd, &fdr, sizeof(int));
 						
-						rand_string(id_Operazione,id_size);
-						push_back(operazioni, create_Operazione(id_Operazione,sockfd, fdr,1));
-						//gli passiamo il canale di comunicazione del client e del ristorante
-						
-						printf("\n Operazione %s aggiunta alla lista operazioni\n",id_Operazione);
+						//crea ed aggiunge una Operazione, si utilizzano i fd del cliente e del ristorante
+						rand_string(id_operazione,id_size);
+						push_back(operazioni, create_Operazione(id_operazione,sockfd, fdr,1)); // STATO = 1
+						//printf("\n Operazione %s aggiunta alla lista operazioni\n",id_operazione);
 
 				//-->	-1
-						/* inviare -1 prima per avvisare il ristorante che deve inviare i prodotti */
+						/* inviare -1 prima per avvisare il ristorante che deve inviare i prodotti del Menu*/
 						var = -1; 
 						FullWrite(fdr, & var, sizeof(int));
 						
-						
 						break;
 
 					}
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 3 INDICA CHE IL RISTORANTE INVIA I PRODOTTI NEL MENU AI CLIENT*/
+					/** NEL CASO SI RICEVA 3: INDICA CHE IL RISTORANTE INVIA IL MENU AL CLIENT CHE HA FATTO RICHIESTA **/
 					case 3: {
-						/* legge la quantità di prodotti inviati dal ristorante */
+						
+						/* legge la quantità di prodotti nel menu inviati dal ristorante al client*/
 						FullRead(sockfd, & cnt, sizeof(int));
 						
-						/**
-							trova la Operazione che ha queste caratteristiche:
-								1- 	la socket del ristorante è pari a quella dell'attuale connessione
+						/** trova l'Operazione che ha queste caratteristiche:
+								1- 	il fd del ristorante è pari a quella dell'attuale connessione
 								2- 	si trova in stato 1, il che vuol dire che il server prende un
-									qualsiasi client (indicato dal campo "client") che fa Operazione 
-									di menu e gli invia i prodotti */
-						ope = find_client_opeuest( operazioni, sockfd, 1);
-						/* si trova l'fd del client che ha richiesto il menu da questo ristorante */
-						fdc=ope->fd_client;
+									qualsiasi client (indicato dal campo "client") che fa richiesta 
+									di menu per inviargli i prodotti */
+						ope = find_client_operation( operazioni, sockfd, 1);
+						fdc=ope->fd_client; // si trova l'fd del client che ha richiesto il menu da questo ristorante
 						
-						//invia il numero di prodotti 
+						/* invia il numero di prodotti del menu al client */
 						FullWrite(fdc, & cnt, sizeof(int));
 						for (j = 0; j < cnt; j++) {
-							/* recezione ed invio dei prodotti dal ristorante al client*/
+							/* recezione ed inoltro dei prodotti dal ristorante al client direttamente*/
 							FullRead(sockfd,&p,sizeof(Prodotto));
 							FullWrite(fdc,&p,sizeof(Prodotto));
-							print_struct_Prodotto(&p);
+							//print_struct_Prodotto(&p);
 						}
 						
-						printf("Invio dei (%d) prodotti del menu al client [connesso su fd: %d]\n",j,fdc);
+						//printf("Invio dei (%d) prodotti del menu al client [connesso su fd: %d]\n",j,fdc);
 						
-						// FA "EVOLVERE" la Operazione -> adesso, il ristorante che farà Operazione 
-						ope -> stato_Operazione = 2;
+						// fa "evolvere" lo stato dell'operazione da effettuare
+						ope -> stato_operazione = 2;
 						
 						break;
 					}
 					
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 4 INDICA CHE IL SERVER DEVE RICEVERE L'ORDINE DEL CLIENT ED INVIARLO AL RISTORANTE*/
-					case 4: { //riceve l'ordine dal client e lo invia al ristorante
+					/** NEL CASO SI RICEVA 4: INDICA CHE IL CLIENT DEVE INVIARE L'ORDINE ED INOLTRARLO AL RISTORANTE*/
+					case 4: {
 
-						/* leggo l'ordine del client*/
+						/* leggo la quantità di elementi nell'ordine del client*/
 						FullRead(sockfd, &cnt, sizeof(int));
-						/** 
-							trova la Operazione che ha queste caratteristiche 
+						
+						/** trova l'Operazione che ha queste caratteristiche:
 							1- 	la socket del client è pari a quella dell'attuale in connessione.
-							2- 	con stato 4, il che vuol dire che il serve prende il ristorante
-								(indicato dal campo "ristorante") e gli inoltre l'ordine del client.*/
-						ope = find_resturant_opeuest( operazioni, sockfd, 2);
-						/* si trova l'fd del ristorante a cui il client ha fatto Operazione menu e quindi vuole inviargli l'ordine */
-						fdr = ope->fd_ristorante;
+							2- 	si trova nello stato 2, il che vuol dire che il serve prende il ristorante
+								(indicato dal campo apposito) e gli inoltre l'ordine del client.*/
+						ope = find_resturant_operation( operazioni, sockfd, 2);
+						fdr = ope->fd_ristorante; // si trova l'fd del ristorante richiesto dal client*/
+
 						
 				//->	-2
 						/* inviare -2 prima per avvisare il ristorante che sta arrivando l'ordine */
 						var = -2;
 						FullWrite(fdr, & var, sizeof(int));
 						
+						/* invio id_operazione al ristorante */
+						stpcpy(id_operazione,ope->id_operazione);
+						FullWrite(fdr, id_operazione, sizeof(char)*id_size);
+						/** Questo servirà successivamente per tener traccia dello stato di avanzamento della richiesta del client e del ristorante fino alla consegna dell'ordine */
+
 						/* invio size dell'ordine al ristorante ricevuto all'inizio*/
 						FullWrite(fdr, &cnt, sizeof(int));
-						
-						/*invio id_Operazione al ristorante*/
-						stpcpy(id_Operazione,ope->id_Operazione);
-						FullWrite(fdr, id_Operazione, sizeof(char)*id_size);
 
 						ord=malloc(sizeof(Ordine));
 						for (j = 0; j < cnt; j++) {
-							/* recezione ed invio ordine dal client al ristorante*/
+							/* recezione ed inoltro ordine dal client al ristorante*/
 							FullRead(sockfd,ord,sizeof(Ordine));
 							FullWrite(fdr,ord,sizeof(Ordine));
 							print_struct_Ordine(ord);
 							//ord=(Ordine*)NULL;
 						}
+						
 						printf("\nIl client [connesso su fd: %d] ha effettuato l'ordinazione ed è stata inoltrata al ristorante [connesso su fd: %d].\n",sockfd,fdr);
 						
-						// FA "EVOLVERE" la Operazione -> adesso, il ristorante che farà Operazione 
-						ope -> stato_Operazione = 3;
+						// fa "evolvere" lo stato dell'operazione da effettuare 
+						ope -> stato_operazione = 3;
 						
 						break;
 					}
 					
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 5 INDICA CHE IL RISTORANTE STA ELABORATO UN ORDINE */
+					/** NEL CASO SI RICEVA 5: INDICA CHE IL RISTORANTE HA ELABORATO L'ORDINE **/
 					case 5: {
 
 						/* il ristorante invia l'id del rider che ha preso in carico l'ordine */
 						FullRead(sockfd, id_rider, sizeof(char)*id_size);
 
-						/* ed inoltre invia pure l'id relativo alla Operazione effettuata dal client */
-						FullRead(sockfd, id_Operazione, sizeof(char)*id_size);
+						/* ed inoltre invia pure l'id relativo all'operazione da aggiornare*/
+						FullRead(sockfd, id_operazione, sizeof(char)*id_size);
+						/* 	Si è scelto l'invio e la successiva recezione dell'id-operazione in quanto
+							bisognava tener conto di una specifica richiesta, avente uno specifico client. 
+							Per cui, se si dovesse utilizzare la funzione find_client_operation 
+							si troverà un generico client, che ha ordinato dallo stesso ristorante, ma non
+							è detto che sia il client a cui effettivamente il rider sta inviando l'ordine	*/
 
-						/* trova la Operazione a cui è associata quell'id */
-						ope = find_id_opeuest( operazioni, id_Operazione);
-						/* si estrae il fd del client */
-						fdc=ope->fd_client;
+						/* trova l'operazione a cui è associata quell'id */
+						ope = find_id_operation( operazioni, id_operazione);
+						fdc=ope->fd_client;// si ricava l'fd del client
 
-						/* invia l'id del rider al client*/
+						/* invia l'id del rider (ricevuto) al client*/
 						FullWrite(fdc, id_rider, sizeof(char)*id_size);
 
 						/* riceve l'id_client dal client*/
 						FullRead(fdc, id_client, sizeof(char)*id_size);
 
-						/* invia l'id_client appena ricevuto al ristorante*/
+						/* invia l'id_client (ricevuto) al ristorante*/
 						FullWrite(sockfd, id_client, sizeof(char)*id_size);
+						
 						printf("Consegna assegnata al rider: %s per il cliente %s.\n", id_rider, id_client);
 						
-						// FA "EVOLVERE" la Operazione -> adesso, il ristorante che farà Operazione 
-						ope -> stato_Operazione = 4;
+						// fa "evolvere" lo stato dell'operazione
+						ope -> stato_operazione = 4;
 						
 						break;
 					}
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 8 INDICA CHE IL RISTORANTE HA CONSEGNATO L'ORDINE */
-					case 8:{ // consegna ordine
-						FullRead(sockfd, id_Operazione, sizeof(char)*id_size);
-						printf("Operazione [%s] ",id_Operazione);
+					/** NEL CASO SI RICEVA: 8 INDICA CHE IL RISTORANTE (attraverso il rider) HA CONSEGNATO L'ORDINE **/
+					case 8:{
 						
-						/** trova IL NODO della Operazione che ha queste id pari a quello passato dal ristorante*/
-						tmp = find_id_opeuest_node( operazioni, id_Operazione);
-						delete_node(operazioni, tmp); //elimina Operazione memorizzata
+						/* riceve l'id del'operazione contenente l'fd del client che ha ricevuto l'ordine */
+						FullRead(sockfd, id_operazione, sizeof(char)*id_size);
+				
+						/* trova IL NODO dell'Operazione che ha id pari a quello passato dal ristorante 
+							e la elimina, in quanto non c'è più necessità di memorizzarla, in quanto
+							sono state svolte e soddisfatte tutte le operazioni relative a:
+							- richiesta menu, 
+							- passaggio ordine
+							- elaborazione ordine
+							- consegna ordine 	*/
+						tmp = find_id_operation_node( operazioni, id_operazione);
+						delete_node(operazioni, tmp);
 						
-						printf(" effettuata dal rider: %s.\n",id_rider);
+						printf("Consegna [%s] effettuata dal rider: %s.\n",id_operazione,id_rider);
 						
 						break;
 					}
 					
-					case 9: {//disconnessione client
+					case 9: {
+						//disconnessione client
 						if (close(sockfd) == -1)
 							perror("Errore nella close");
 						FD_CLR(sockfd, & allset);
@@ -355,7 +359,8 @@ int main(int argc, char ** argv) {
 						break;
 					}
 					
-					case 10: {// disconnessione ristorante
+					case 10: {
+						// disconnessione ristorante
 						if (close(sockfd) == -1)
 							perror("Errore nella close");
 						FD_CLR(sockfd, & allset);
@@ -364,8 +369,9 @@ int main(int argc, char ** argv) {
 						delete_node( ristoranti, tmp);
 						break;
 					}
-
-					default:
+ 
+					default: // se ricevo un segnale non registrato
+							// non faccio niente
 						break;
 				}
 

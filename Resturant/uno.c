@@ -9,7 +9,11 @@
 #include <signal.h>
 #include "../include/llist.h"
 
-void before_close(int sig);
+void before_close(int sig) {
+    int var = 10;
+    FullWrite(serv, & var, sizeof(int));
+    exit(0);
+}
 
 int serv;
 
@@ -47,12 +51,12 @@ int main(int argc, char ** argv) {
         exit(1);
     }
 
-/* ##################_FINE CREAZIONE SOKET_##################### */
+/* ##################################################################### */
 
 
-/* ##################_ SOCKET RECEZIONE_########################## */
-	int sockfd;
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+/* ########################_ COLLEGAMENTO SERVER_ ############################## */
+	int servfd;
+    if ((servfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket error, Assegnazione automatica\n");
         //exit(1);
 		argv[1]="127.0.0.1";
@@ -64,39 +68,34 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "inet_pton error for %s\n", argv[1]);
         exit(1);
     }
-    if (connect(sockfd, (struct sockaddr * ) & servaddr, sizeof(servaddr)) < 0) {
+    if (connect(servfd, (struct sockaddr * ) & servaddr, sizeof(servaddr)) < 0) {
         fprintf(stderr, "connect error\n");
         exit(1);
     }
-/* ##################_FINE CREAZIONE SOCKET RECEZIONE_############### */
+/* ############################################################################# */
 
 
 //------------------------ DICHIARAZIONE VAR ----------------------//
-    
 	
-	int i,j; //invarianti
-    int n, code, numProdotti;
+	int i,j, n, code, numProdotti, var, loop, scelta, cnt, x;
     int fd_client, fd_rider; // fd dei client e dei rider
-	char id_rider[id_size], id_client[id_size], id_Operazione[id_size];
-    int var, loop;
-    int scelta, cnt, x;
+	char id_rider[id_size], id_client[id_size], id_operazione[id_size];
 	
 	node *tmp;
 
     Ordine ord;
-	L_ordini *lo;
+	Info_ordini *lo;
 	Prodotto p;
-
+	list* order_info = create_list(); // per la recezione dell'ordine
+	
+	list* ordini = create_list(); //alloco lista per gli ordini
+   	list* riders = create_list(); //alloco lista per i riders
 
 	char nome_rist[max_name];
 	strcpy(nome_rist,"Palapizza");
+ 
 
-	list* ordini = create_list(); //alloco lista per gli ordini
-   	list* riders = create_list(); //alloco lista per i riders
-   	list* stato_ordini = create_list();
-	
-   	list *menu=create_list();
-
+   	list *menu=create_list(); //alloco lista per il menu
 	/* creazione menu */
 	int n_items=5;
 	char *items[n_items];
@@ -117,14 +116,14 @@ int main(int argc, char ** argv) {
 	
 	traverse(menu,print_struct_Prodotto);
 
-	
 	int no=0; //identifica il numero degli ordnini disponibili per la consegna del rider 
 	
-//-------------------- FINE DICHIARAZIONE VAR ----------------------//
+//---------------------------------------------------------------------------------------//
 
 
 /* ##################_INIZIALIZZAZIONE CAMPI SELECT_########################## */
-    serv=sockfd;
+
+    serv=servfd;
 	
 	fd_set rset;
     fd_set allset;
@@ -133,26 +132,27 @@ int main(int argc, char ** argv) {
     int maxd = listen_fd;
     int maxi = 1;
 
-    if (sockfd > listen_fd)
-        maxd = sockfd;
+    if (servfd > listen_fd)
+        maxd = servfd;
 
     for (i = 1; i < FD_SETSIZE; i++)
         client[i] = -1;
 
     client[0] = listen_fd;
-    client[1] = sockfd;
+    client[1] = servfd;
 
     struct sockaddr_in cliaddr;
     socklen_t cliaddr_len;
 
-    int ridfd;
+    int sockfd;
     int connd;
     int ready;
 
     FD_ZERO( & allset);
-    FD_SET(listen_fd, & allset);
-    FD_SET(sockfd, & allset);
-/* ##################_FINE INIZIALIZZAZIONE_########################## */
+    FD_SET(listen_fd, & allset); 
+    FD_SET(servfd, & allset); // setto tra i descrittori in lettura da controllare anche il fd su cui si è collegati al server
+	
+/* ########################################################################### */
 
 //*****************************_INIZIO_PROTOCOLLO_******************************************************//
 	
@@ -160,27 +160,23 @@ int main(int argc, char ** argv) {
 //->	0	
 	/* una volta che si connette gli invia un identificativo -> 0 "sono ristorante e ti sto per inviare i miei dati" */
 	var = 0;
-    FullWrite(sockfd, & var, sizeof(int));
+    FullWrite(servfd, & var, sizeof(int));
 
-	/* invio dati del ristorante al server*/
-    FullWrite(sockfd, &nome_rist, sizeof(char)*max_name); //invio dei dati al server
-
+	/* invio nome del ristorante al server */
+    FullWrite(servfd, &nome_rist, sizeof(char)*max_name);
 
     signal(SIGINT, before_close); //gestione segnale SIGINT ->invia prima il messaggio "10" al server (" sono il ristorante me ne sto andando libera il decrittore che mi hai allocato")
 	
     while (1) {
+		
         rset = allset;
-        /* 
-          chiama la select: 
-            - esce quando un descrittore è pronto
-            - restituisce il numero di descrittori pronti
-        */
+        
+		///* SELECT  *////
         if ((ready = select(maxd + 1, & rset, NULL, NULL, NULL)) < 0)
             perror("errore nella select");
 
-		//* CONTROLLO SE IL DESCRITTORE PER LE CONNESSIONI E PRONTO IN LETTURA *//
-		//* INDICA CHE QUALCUNO VUOLE CONNETTERSI AL RISTORANTE                *//
-        // OVVIAMENTE SOLO I RIDER SI CONNETTERANNO
+		/* si controlla se il descrittore per le connessioni è pronto in lettura */
+        // gli unici a fare queste richieste sono ovviamente i rider 
         if (FD_ISSET(listen_fd, & rset)) {
             cliaddr_len = sizeof(cliaddr);
             // invoca la accept
@@ -191,15 +187,19 @@ int main(int argc, char ** argv) {
                 if (client[i] < 0) {
                     client[i] = connd;
                     break;}
+					
             // se non ci sono posti segnala errore
             if (i == FD_SETSIZE)
                 perror("troppi client");
+			
+			// registra il socket ed aggiorna (opportunamente) maxd e maxi
             FD_SET(connd, & allset);
-            // registra il socket ed aggiorna maxd
             if (connd > maxd)
                 maxd = connd;
             if (i > maxi)
                 maxi = i;
+			
+			// decrementa il numero di "fd" da leggere (in quanto uno è già stato soddisfatto)	
             if (--ready <= 0)
                 continue;
         }
@@ -208,48 +208,47 @@ int main(int argc, char ** argv) {
         for (i = 1; i <= maxi; i++) {
 			
 			// se il client i-esimo non è settato (=-1), passa avanti
-            if ((ridfd = client[i]) < 0)
+            if ((sockfd = client[i]) < 0)
                 continue;
 
 //*****************************_INIZIO_PROTOCOLLO_******************************************************//
 			
 			//sleep(1);
-            if (FD_ISSET(ridfd, & rset)) {
+            if (FD_ISSET(sockfd, & rset)) {
 
-				// ridfd -> fd rider; sockfd -> fd server, nei casi "-1" e "-2" sono scambiabili 
+				// sockfd -> fd rider; servfd -> fd server, nei casi "-1" e "-2" sono scambiabili 
 				
 				/***********************************************************************/
 				/*** AD OGNI CONNESSIONE INDIPENDENTE DAL CLIENT RICEVE UN MESSAGGIO ***/
-				/*** QUESTO MESSAGGIO CONTIENE IL "COSA DEVE FARE" DEL RISTORANTE ******/
-				/**** CONTROLLA IL TIPO DI MESSAGGIO IN INGRESSO ***********************/
+				/*** QUESTO MESSAGGIO CONTIENE IL "COSA DEVE FARE" IL SEREVER **********/
+				/***********************************************************************/
 				
+				/** CONTROLLA IL MESSAGGIO IN INGRESSO **/
+                FullRead(sockfd, & code, sizeof(int));
 				
-                FullRead(ridfd, & code, sizeof(int));
-				printf("\n--------------->CODICE: %d -> fd: %d \n",code, ridfd);
+				//printf("\n--------------->CODICE: %d -> fd: %d \n",code, sockfd);
 				
-
 				switch (code) {
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO -1 INDICA CHE IL SERVER VUOLE I PRODOTTI NEL MENU */
-					case -1: { //Il ristorante invia i prodotti al Server
-						//-> in questo caso ridfd == sockfd
+					/** NEL CASO SI RICEVA -1:  INDICA CHE IL SERVER VUOLE I PRODOTTI NEL MENU **/
+					case -1: { 
+						//-> in questo caso sockfd == servfd
 						
 				//->	3
 						/* invio 3 per dire al server di posizionarsi nel caso in cui devi ricevere i prodotto */
 						var = 3;
-						FullWrite(sockfd, & var, sizeof(int));
+						FullWrite(servfd, & var, sizeof(int));
 						
-						/* invio della quantità di prodotti */
-						//cnt = size(menu);
+						/* calclolo ed invio della quantità di prodotti nel menu*/
 						cnt=n_items;
-						FullWrite(sockfd, &cnt, sizeof(int));
+						FullWrite(servfd, &cnt, sizeof(int));
 						tmp=(node*)menu->head;
 						p = *(Prodotto*)tmp->data;
 						print_struct_Prodotto(&p);
 						for(i=0;i<cnt;i++){
 							p = *(Prodotto*)tmp->data;
-							/* invio prodotti */
-							FullWrite(sockfd,&p,sizeof(p));
+							/* invio prodotti del menu */
+							FullWrite(servfd,&p,sizeof(p));
 							tmp=tmp->next;
 						}
 						printf("\nHo inviato i (%d) prodotti richiesti dal server\n",i);
@@ -258,24 +257,25 @@ int main(int argc, char ** argv) {
 					}
 
 
-					/**** NEL CASO SI RICEVA IL MESSAGGIO -2 INDICA CHE IL RISTORANTE DEVE RICEVERE L'ORDINE DAL SERVER*/
+					/** NEL CASO SI RICEVA -2:  INDICA CHE IL RISTORANTE DEVE RICEVERE L'ORDINE DI UN CLIENTE DAL SERVER **/
 					case -2: { 
 						
-							/* ricezione della qt di oggetti nell'ordine */
-							FullRead(sockfd,&cnt,sizeof(int));
-							
-							/* recezione dell'id della Operazione ordine*/
-							FullRead(sockfd,id_Operazione,sizeof(char)*id_size);
-							
-							for(int i=0;i<cnt;i++){
-								FullRead(sockfd,&ord,sizeof(ord));
-								push_back(ordini,&ord);
-							}
+						/* recezione dell'id dell'operazione ordine a cui sarà associato l'ordine*/
+						FullRead(servfd,id_operazione,sizeof(char)*id_size);
 						
-						printf("\n Ordine %s di %d elementi ricevuto dal server\n",id_Operazione, cnt);
+						/* ricezione della qt di oggetti nell'ordine */
+						FullRead(servfd,&cnt,sizeof(int));
+						
+						for(int i=0;i<cnt;i++){
+							/* lettura degli oggetti dell'ordine */
+							FullRead(servfd,&ord,sizeof(ord));
+							push_back(ordini,&ord);
+						}
+						
+						printf("\n Ordine %s di %d elementi ricevuto dal server\n",id_operazione, cnt);
 						
 						/* aggiunge ordine ricevuto in coda alla lista degli ordini*/
-						push_back(stato_ordini, create_L_ordini(ordini,id_Operazione,0,-1));
+						push_back(order_info, create_Info_ordini(ordini,id_operazione,0,-1));
 						
 						no++; // incrementa il numero degli ordini disponibili al rider;
 						
@@ -286,7 +286,7 @@ int main(int argc, char ** argv) {
 						break;
 					}
 
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 0 INDICA CHE IL RIDER VUOLE SAPERE QUANTI ORDINI CI SONO DA CONSEGNARE */
+					/** NEL CASO SI RICEVA 0: INDICA CHE IL RIDER VUOLE SAPERE QUANTI ORDINI CI SONO DA CONSEGNARE **/
 					case 0: {
 					
 						if (no <= 0){ // non ci sono ordini
@@ -297,23 +297,23 @@ int main(int argc, char ** argv) {
 							printf("\n Ci sono %d ordini disponibili \n",no);
 							
 						/* invio il numero degli ordini disponibili al rider */
-						FullWrite(ridfd, &no, sizeof(int));
+						FullWrite(sockfd, &no, sizeof(int));
 						
 						break;
 					}
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 1 VUOL DIRE CHE IL RIDER E' DISPOSTO A CONSEGNARE UN ORDINE*/
+					/** NEL CASO SI RICEVA 1: VUOL DIRE CHE IL RIDER E' DISPOSTO A CONSEGNARE UN ORDINE **/
 					case 1: {
 					
-						tmp = stato_ordini->head;
+						tmp = order_info->head;
 						loop=1;
 						x=0; // variabile assegnazione ordine;
 						
-						/* Ricerca ordine disponibile */
+						/** Ricerca ordine disponibile */
 						while(tmp!=NULL && loop==1 && no>0){
-							lo=(L_ordini*)tmp->data;
+							lo=(Info_ordini*)tmp->data;
 							x = lo->stato_ordine;
-							printf("ordine %s = stato %d",lo->id_Operazione,x);
+							printf("ordine %s = stato %d",lo->id_operazione,x);
 							if(x==0){ // ordine non assegnato a nessun rider -> di conseguenza lo assegno al rider.
 								
 								// setto lo stato ad 1 = "ordine assegnato ad un rider"
@@ -323,10 +323,10 @@ int main(int argc, char ** argv) {
 								no--; 
 								
 								// setto l'fd del rider attuale come attributo nella lista ordini
-								lo->fd_rider=ridfd;
+								lo->fd_rider=sockfd;
 								
 								//copio l'id della Operazione per inviarla al server
-								stpcpy(id_Operazione,lo->id_Operazione);
+								stpcpy(id_operazione,lo->id_operazione);
 								
 								loop=0; // esco dal while- interrompo il ciclo
 								
@@ -340,30 +340,30 @@ int main(int argc, char ** argv) {
 						//->	1
 							/* invio 1 al rider che indica che può "accaparrarsi" l'ordine per la consegna */
 							var =1;
-							FullWrite(ridfd, &var, sizeof(int));
+							FullWrite(sockfd, &var, sizeof(int));
 							
 							/* allora il rider mi invia il suo id */
-							FullRead(ridfd, id_rider, sizeof(char)*id_size);
+							FullRead(sockfd, id_rider, sizeof(char)*id_size);
 							
-							/* invio l'id_Operazione dell'ordine che ha preso in carico*/
-							FullWrite(ridfd,id_Operazione,sizeof(char)*id_size);
+							/* invio l'id_operazione dell'ordine che ha preso in carico*/
+							FullWrite(sockfd,id_operazione,sizeof(char)*id_size);
 							
 						//->	5
 							/* invio al server 5, che significa che un ordine è preso in carico dal rider*/
 							var = 5;
-							FullWrite(sockfd, & var, sizeof(int));
+							FullWrite(servfd, & var, sizeof(int));
 							
 							/* invio id del rider al server */
-							FullWrite(sockfd, id_rider, sizeof(char)*id_size);
+							FullWrite(servfd, id_rider, sizeof(char)*id_size);
 							
-							/* invio id_Operazione presa in carico dal rider */
-							FullWrite(sockfd, id_Operazione, sizeof(char)*id_size);
+							/* invio id_operazione presa in carico dal rider */
+							FullWrite(servfd, id_operazione, sizeof(char)*id_size);
 							
 							/* aspetto che il server mi invii l'id del client che ha effettuato l'ordine */
-							FullRead(sockfd, id_client, sizeof(char)*id_size);
+							FullRead(servfd, id_client, sizeof(char)*id_size);
 							
 							/* invio l'id del client al rider */
-							FullWrite(ridfd, id_client, sizeof(char)*id_size);
+							FullWrite(sockfd, id_client, sizeof(char)*id_size);
 							
 							break;
 						}
@@ -373,7 +373,7 @@ int main(int argc, char ** argv) {
 						//->	0
 							/* invio 0 al rider che indica che non può consegnare più l'ordine */
 							var = 0;
-							FullWrite(ridfd, &var, sizeof(int));
+							FullWrite(sockfd, &var, sizeof(int));
 							
 							break;
 						}
@@ -381,24 +381,24 @@ int main(int argc, char ** argv) {
 						break;
 					}
 					
-					/**** NEL CASO SI RICEVA IL MESSAGGIO 2 VUOL DIRE CHE IL RIDER HA CONSEGNATO */
+					/** NEL CASO SI RICEVA 2: VUOL DIRE CHE IL RIDER HA CONSEGNATO */
 					case 2:{
 						
-						/*il rider mi invia un messaggio contenente l'id_Operazione dell'ordine che ha inviato*/
-						FullRead(ridfd, id_Operazione, sizeof(char)*id_size);
+						/*il rider mi invia un messaggio contenente l'id_operazione dell'ordine che ha inviato*/
+						FullRead(sockfd, id_operazione, sizeof(char)*id_size);
 						
 				//->	8
 						/* invio al server 8 -> ordine dato al rider consegnato */
 						var = 8;
-						FullWrite(sockfd, & var, sizeof(int));
+						FullWrite(servfd, & var, sizeof(int));
 						
-						/* invio al server id_Operazione da eliminare */
-						FullWrite(sockfd,id_Operazione,sizeof(char)*id_size);
+						/* invio al server id_operazione da eliminare */
+						FullWrite(servfd,id_operazione,sizeof(char)*id_size);
 						
-						printf("Ordine %s effettuato dal rider: %s, al cliente %s.\n",id_Operazione, id_rider, id_client);
+						printf("Ordine %s effettuato dal rider: %s, al cliente %s.\n",id_operazione, id_rider, id_client);
 						
 						/* trovo l'ordine in questione e lo setto come consegnato */
-						lo=find_l_ordine(stato_ordini,id_Operazione);
+						lo=find_l_ordine(order_info,id_operazione);
 						lo->stato_ordine=2; 
 						
 						break;
@@ -420,12 +420,4 @@ int main(int argc, char ** argv) {
 		
     }
 
-}
-
-
-
-void before_close(int sig) {
-    int var = 10;
-    FullWrite(serv, & var, sizeof(int));
-    exit(0);
 }

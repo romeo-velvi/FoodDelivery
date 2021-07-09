@@ -69,7 +69,7 @@ typedef struct operazione { //Tiene traccia delle richieste client-ristorante ne
 } Operazione;
 
 
-typedef struct lista_ordini{
+typedef struct info_ordini{
 	list* ordini;
 	char id_operazione[id_size]; //per identificarla nel server.
 	int fd_rider; // rider che effettuerà la consegna
@@ -80,7 +80,7 @@ typedef struct lista_ordini{
 		1: -> ordine assegnato
 		2: -> ordine consegnato
 	*/
-} L_ordini;
+} Info_ordini;
 
 
 /***************************************************
@@ -131,7 +131,7 @@ Ristorante* create_Ristorante (char*nome_R, int fd_rist);
 Ordine* create_Ordine (char*items,int qt);
 Rider* create_Rider (char*id_rider, int fd_rider);
 Operazione* create_Operazione(char *n, int a, int b, int c);
-L_ordini* create_L_ordini(list*l, char *c, int s, int fd_rider);
+Info_ordini* create_Info_ordini(list*l, char *c, int s, int fd_rider);
 
 // funzioni per cancellare gli oggetti
 void free_Prodotto(void*data);
@@ -139,7 +139,7 @@ void free_Ristorante(void*data);
 void free_Ordine(void*data);
 void free_Rider(void*data);
 void free_Operazione(void*data);
-void free_L_ordini(void *data);
+void free_Info_ordini(void *data);
 
 // funzioni per stampare i risultati dei dati passati
 void print_struct_Prodotto(void*data);
@@ -147,7 +147,7 @@ void print_struct_Ristorante(void*data);
 void print_struct_Ordine(void*data);
 void print_struct_Rider(void*data);
 void print_struct_Operazione(void*data);
-void print_struct_L_ordini(void*data);
+void print_struct_Info_ordini(void*data);
 
 
 
@@ -168,19 +168,19 @@ node* find_resturant_by_name (list*l,char*nome_rist);
 node* find_resturant_by_fd (list*l, int fd);
 
 // cerca la Operazione dato l'fd del client {#SERVER}
-Operazione* find_resturant_request(list *l,int fd,int st); // ritorna fd ristorante
+Operazione* find_resturant_operation(list *l,int fd,int st); // ritorna fd ristorante
 
 // cerca la Operazione dato l'fd del ristorante {#SERVER}
-Operazione* find_client_request(list *l,int fd,int st); // ritorna fd client
+Operazione* find_client_operation(list *l,int fd,int st); // ritorna fd client
 
 // cerca la Operazione dato l'id della Operazione {#SERVER}
-Operazione* find_id_request(list *l, char*id);
+Operazione* find_id_operation(list *l, char*id);
 
 // ritorna il nodo nella lista che ha id pari a quello dato {#SREVER}
-node* find_id_request_node(list*l, char*id);
+node* find_id_operation_node(list*l, char*id);
 
 // cerca tra i l_o con fd pari a quello dato come argomento.
-L_ordini* find_l_ordine(list*l, char *id);
+Info_ordini* find_l_ordine(list*l, char *id);
 
 //* FULL READ & FULL WRITE*//
 void FullRead(int fd, void * buf, size_t count); //funzione per la gestione del valore di ritorno nella fullRead
