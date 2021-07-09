@@ -85,7 +85,7 @@ int main(int argc, char ** argv) {
 	node *tmp;
 
     Ordine ord;
-	Info_ordini *lo;
+	Info_ordine *lo;
 	Prodotto p;
 	list* order_info = create_list(); // per la recezione dell'ordine
 	
@@ -158,9 +158,9 @@ int main(int argc, char ** argv) {
 //*****************************_INIZIO_PROTOCOLLO_******************************************************//
 	
 
-//->	0	
-	/* una volta che si connette gli invia un identificativo -> 0 "sono ristorante e ti sto per inviare i miei dati" */
-	var = 0;
+//->	1	
+	/* una volta che si connette gli invia un identificativo -> 1 "sono ristorante e ti sto per inviare i miei dati" */
+	var = 1;
     FullWrite(servfd, & var, sizeof(int));
 
 	/* invio nome del ristorante al server */
@@ -232,12 +232,12 @@ int main(int argc, char ** argv) {
 				switch (code) {
 					
 					/** NEL CASO SI RICEVA -1:  INDICA CHE IL SERVER VUOLE I PRODOTTI NEL MENU **/
-					case -1: { 
+					case 1: { 
 						//-> in questo caso sockfd == servfd
 						
-				//->	3
-						/* invio 3 per dire al server di posizionarsi nel caso in cui devi ricevere i prodotto */
-						var = 3;
+				//->	4
+						/* invio 4 per dire al server di posizionarsi nel caso in cui devi ricevere i prodotto */
+						var = 4;
 						FullWrite(servfd, & var, sizeof(int));
 						
 						/* calclolo ed invio della quantità di prodotti nel menu*/
@@ -259,7 +259,7 @@ int main(int argc, char ** argv) {
 
 
 					/** NEL CASO SI RICEVA -2:  INDICA CHE IL RISTORANTE DEVE RICEVERE L'ORDINE DI UN CLIENTE DAL SERVER **/
-					case -2: { 
+					case 2: { 
 						
 						/* recezione dell'id dell'operazione ordine a cui sarà associato l'ordine*/
 						FullRead(servfd,id_operazione,sizeof(char)*id_size);
@@ -276,7 +276,7 @@ int main(int argc, char ** argv) {
 						printf("\n Ordine %s di %d elementi ricevuto dal server\n",id_operazione, cnt);
 						
 						/* aggiunge ordine ricevuto in coda alla lista degli ordini*/
-						push_back(order_info, create_Info_ordini(ordini,id_operazione,0,-1));
+						push_back(order_info, create_Info_ordine(ordini,id_operazione,1,-1));
 						
 						no++; // incrementa il numero degli ordini disponibili al rider;
 						
@@ -288,7 +288,7 @@ int main(int argc, char ** argv) {
 					}
 
 					/** NEL CASO SI RICEVA 0: INDICA CHE IL RIDER VUOLE SAPERE QUANTI ORDINI CI SONO DA CONSEGNARE **/
-					case 0: {
+					case 3: {
 					
 						if (no <= 0){ // non ci sono ordini
 							printf("\n Non ci sono attualmente ordini disponibili per i rider\n");
@@ -304,21 +304,21 @@ int main(int argc, char ** argv) {
 					}
 					
 					/** NEL CASO SI RICEVA 1: VUOL DIRE CHE IL RIDER E' DISPOSTO A CONSEGNARE UN ORDINE **/
-					case 1: {
+					case 4: {
 					
 						tmp = order_info->head;
 						loop=1;
-						x=0; // variabile assegnazione ordine;
+						x=1; // variabile assegnazione ordine;
 						
 						/** Ricerca ordine disponibile */
 						while(tmp!=NULL && loop==1 && no>0){
-							lo=(Info_ordini*)tmp->data;
+							lo=(Info_ordine*)tmp->data;
 							x = lo->stato_ordine;
 							printf("ordine %s = stato %d",lo->id_operazione,x);
-							if(x==0){ // ordine non assegnato a nessun rider -> di conseguenza lo assegno al rider.
+							if(x==1){ // ordine non assegnato a nessun rider -> di conseguenza lo assegno al rider.
 								
 								// setto lo stato ad 1 = "ordine assegnato ad un rider"
-								lo->stato_ordine=1; 
+								lo->stato_ordine=2; 
 								
 								// decremento il numero di ordini disponibili ai rider
 								no--; 
@@ -340,7 +340,7 @@ int main(int argc, char ** argv) {
 							
 						//->	1
 							/* invio 1 al rider che indica che può "accaparrarsi" l'ordine per la consegna */
-							var =1;
+							var = 1;
 							FullWrite(sockfd, &var, sizeof(int));
 							
 							/* allora il rider mi invia il suo id */
@@ -349,9 +349,9 @@ int main(int argc, char ** argv) {
 							/* invio l'id_operazione dell'ordine che ha preso in carico*/
 							FullWrite(sockfd,id_operazione,sizeof(char)*id_size);
 							
-						//->	5
-							/* invio al server 5, che significa che un ordine è preso in carico dal rider*/
-							var = 5;
+						//->	6
+							/* invio al server 6, che significa che un ordine è preso in carico dal rider*/
+							var = 6;
 							FullWrite(servfd, & var, sizeof(int));
 							
 							/* invio id del rider al server */
@@ -371,9 +371,9 @@ int main(int argc, char ** argv) {
 						
 						else{ // se il rider non ha trovato ordini disponibili
 						
-						//->	0
-							/* invio 0 al rider che indica che non può consegnare più l'ordine */
-							var = 0;
+						//->	2
+							/* invio 2 al rider che indica che non può consegnare più l'ordine */
+							var = 2;
 							FullWrite(sockfd, &var, sizeof(int));
 							
 							break;
@@ -383,14 +383,14 @@ int main(int argc, char ** argv) {
 					}
 					
 					/** NEL CASO SI RICEVA 2: VUOL DIRE CHE IL RIDER HA CONSEGNATO */
-					case 2:{
+					case 5:{
 						
 						/*il rider mi invia un messaggio contenente l'id_operazione dell'ordine che ha inviato*/
 						FullRead(sockfd, id_operazione, sizeof(char)*id_size);
 						
-				//->	8
-						/* invio al server 8 -> ordine dato al rider consegnato */
-						var = 8;
+				//->	7
+						/* invio al server 7 -> ordine dato al rider consegnato */
+						var = 7;
 						FullWrite(servfd, & var, sizeof(int));
 						
 						/* invio al server id_operazione da eliminare */
@@ -400,7 +400,7 @@ int main(int argc, char ** argv) {
 						
 						/* trovo l'ordine in questione e lo setto come consegnato */
 						lo=find_l_ordine(order_info,id_operazione);
-						lo->stato_ordine=2; 
+						lo->stato_ordine=3; 
 						
 						break;
 					}

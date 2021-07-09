@@ -9,10 +9,11 @@
 #include<signal.h>
 #include<time.h>
 #include "../include/llist.h"
+
 int sockfd;
 
 void before_close(int sig) {
-    int var = 9;
+    int var = 8;
     FullWrite(sockfd, & var, sizeof(int));
     exit(0);
 }
@@ -20,7 +21,8 @@ void before_close(int sig) {
 
 int main(int argc, char ** argv) {
 
-/* ##################_COLLEGAMENTO SERVER_########################## */
+/* #######################_COLLEGAMENTO SERVER_########################## */
+
     if (argc != 2) {
         fprintf(stderr, "usage: %s <IPaddress>\n Assegnazione automatica\n\n", argv[0]);
         //exit(1);
@@ -43,6 +45,7 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "connect error\n");
         exit(1);
     }
+	
 /* ############################################################# */
 
 
@@ -88,12 +91,12 @@ int main(int argc, char ** argv) {
 		list* order = create_list(); //per l'ordine
     	
         do {
-            //system("clear");
+            system("clear");
 			fdr=-1;
 			
 		//->	1
-			/* una volta che si connette con il server gli invia un identificativo -> 1 "sono client e aspetto i ristoranti" */
-			type=1;
+			/* una volta che si connette con il server gli invia un identificativo -> 2 "sono client e aspetto i ristoranti" */
+			type=2;
             FullWrite(sockfd, & type, sizeof(int));
 			
 			/* il server mi risponde con una lista dei ristoranti */
@@ -133,9 +136,12 @@ int main(int argc, char ** argv) {
 		/* funzione che dati i ristoranti, permette di sceglierne uno e di ritornare il fd aperto sul server che gestisce quest'ultimo */
 		fdr = show_choose_resturant(resturant);	
 
-	//->	2
-		/* invio messaggio contenente 2 -> "ti sto per inviare l'fd del ristorante scelto, aspetto il menu" */
-        var = 2; 
+		system("clear");
+		printf("client [%s]\n", id_client);
+
+	//->	3
+		/* invio messaggio contenente 3 -> "ti sto per inviare l'fd del ristorante scelto, aspetto il menu" */
+        var = 3; 
         FullWrite(sockfd, &var, sizeof(int));
 
         /* invio il fd del ristorante scelto */
@@ -158,6 +164,9 @@ int main(int argc, char ** argv) {
 		printf("\nMenu del ristorante selezionato: \n");
 		order = show_choose_product(menu);
 		
+		system("clear");
+		printf("client [%s]\n", id_client);
+
 		// stampo order
 		traverse(order,print_struct_Ordine);
 		
@@ -165,9 +174,9 @@ int main(int argc, char ** argv) {
 		// si ricava il size dell'ordine
 		cnt=size(order);
 		if (cnt>0){
-	//->	4		
-			/* invia un messaggio contenente 4 -> "ti invio l'ordine, aspetto l'fd del rider che mi deve fare la consegna" */
-			var = 4;
+	//->	5		
+			/* invia un messaggio contenente 5 -> "ti invio l'ordine, aspetto l'fd del rider che mi deve fare la consegna" */
+			var = 5;
 			FullWrite(sockfd, &var, sizeof(int));
 			
 			/* invio il size dell'ordine dovrà ricevere */

@@ -159,7 +159,7 @@ int main(int argc, char ** argv) {
 
 						
 					/** NEL CASO SI RICEVA 0: ALLORA IL RISTORANTE SI CONNETTE **/
-					case 0: {
+					case 1: {
 						/* si riceve il nome del ristorante e aggiunge il ristorante alla lista */
 						FullRead(sockfd, nome_rist, sizeof(char)*max_name);
 						push_front(ristoranti, create_Ristorante(nome_rist,sockfd));
@@ -168,7 +168,8 @@ int main(int argc, char ** argv) {
 					}
 					
 					/** NEL CASO SI RICEVA 1: IL CLIENT SI CONNETTE E VUOLE SAPERE I RISTORANTI ATTIVI **/
-					case 1: {
+					case 2: {
+						
 						/* calcolo ed invio al client il numero dei ristoranti */
 						cnt=size(ristoranti);			
 						FullWrite(sockfd, & cnt, sizeof(int));
@@ -183,10 +184,11 @@ int main(int argc, char ** argv) {
 						}
 						printf("Sono stati inviati i nomi dei ristoranti al client.\n");
 						break;
+						
 					}
 					
 					/** NEL CASO SI RICEVA 2:  INDICA CHE IL CLIENT HA SCELTO IL RISTORANTE **/
-					case 2: {
+					case 3: {
 						
 						/***********************************************************************/
 						/*** QUANDO IL CLIENT SCEGLIE IL RISTORANTE SI CREA UNA OPERAZIONE  ****/
@@ -208,9 +210,9 @@ int main(int argc, char ** argv) {
 						push_back(operazioni, create_Operazione(id_operazione,sockfd, fdr,1)); // STATO = 1
 						//printf("\n Operazione %s aggiunta alla lista operazioni\n",id_operazione);
 
-				//-->	-1
-						/* inviare -1 prima per avvisare il ristorante che deve inviare i prodotti del Menu*/
-						var = -1; 
+				//-->	1
+						/* inviare 1 prima per avvisare il ristorante che deve inviare i prodotti del Menu*/
+						var = 1; 
 						FullWrite(fdr, & var, sizeof(int));
 						
 						break;
@@ -218,7 +220,7 @@ int main(int argc, char ** argv) {
 					}
 					
 					/** NEL CASO SI RICEVA 3: INDICA CHE IL RISTORANTE INVIA IL MENU AL CLIENT CHE HA FATTO RICHIESTA **/
-					case 3: {
+					case 4: {
 						
 						/* legge la quantità di prodotti nel menu inviati dal ristorante al client*/
 						FullRead(sockfd, & cnt, sizeof(int));
@@ -250,7 +252,7 @@ int main(int argc, char ** argv) {
 					
 					
 					/** NEL CASO SI RICEVA 4: INDICA CHE IL CLIENT DEVE INVIARE L'ORDINE ED INOLTRARLO AL RISTORANTE*/
-					case 4: {
+					case 5: {
 
 						/* leggo la quantità di elementi nell'ordine del client*/
 						FullRead(sockfd, &cnt, sizeof(int));
@@ -263,9 +265,9 @@ int main(int argc, char ** argv) {
 						fdr = ope->fd_ristorante; // si trova l'fd del ristorante richiesto dal client*/
 
 						
-				//->	-2
-						/* inviare -2 prima per avvisare il ristorante che sta arrivando l'ordine */
-						var = -2;
+				//->	2
+						/* inviare 2 prima per avvisare il ristorante che sta arrivando l'ordine */
+						var = 2;
 						FullWrite(fdr, & var, sizeof(int));
 						
 						/* invio id_operazione al ristorante */
@@ -295,7 +297,7 @@ int main(int argc, char ** argv) {
 					
 					
 					/** NEL CASO SI RICEVA 5: INDICA CHE IL RISTORANTE HA ELABORATO L'ORDINE **/
-					case 5: {
+					case 6: {
 
 						/* il ristorante invia l'id del rider che ha preso in carico l'ordine */
 						FullRead(sockfd, id_rider, sizeof(char)*id_size);
@@ -330,7 +332,7 @@ int main(int argc, char ** argv) {
 					}
 					
 					/** NEL CASO SI RICEVA: 8 INDICA CHE IL RISTORANTE (attraverso il rider) HA CONSEGNATO L'ORDINE **/
-					case 8:{
+					case 7:{
 						
 						/* riceve l'id del'operazione contenente l'fd del client che ha ricevuto l'ordine */
 						FullRead(sockfd, id_operazione, sizeof(char)*id_size);
@@ -350,7 +352,7 @@ int main(int argc, char ** argv) {
 						break;
 					}
 					
-					case 9: {
+					case 8: {
 						//disconnessione client
 						if (close(sockfd) == -1)
 							perror("Errore nella close");
@@ -359,7 +361,7 @@ int main(int argc, char ** argv) {
 						break;
 					}
 					
-					case 10: {
+					case 9: {
 						// disconnessione ristorante
 						if (close(sockfd) == -1)
 							perror("Errore nella close");

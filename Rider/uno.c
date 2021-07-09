@@ -57,9 +57,9 @@ int main(int argc, char ** argv) {
         cnt = 0;
         do{
 			
-	//-> 	0
-			/* invia al ristorante 0-> intenzione di sapere quanti ordini ci sono*/  
-			var = 0;
+	//-> 	3
+			/* invia al ristorante 3-> intenzione di sapere quanti ordini ci sono*/  
+			var = 3;
             FullWrite(sockfd, & var, sizeof(int));
 			
 			/* legge dal ristorante quanti ordini ci sono da consegnare*/
@@ -92,15 +92,15 @@ int main(int argc, char ** argv) {
         } while (scelta == 0 || scelta ==2); // cicla affinchè non abbia scelto il ristorante / accettato un ordine
 
 
-//->	1
-		/* invio messaggio 1 al ristorante -> ho intenzione di prendere in carico l'ordine */
-        var = 1;
+//->	4
+		/* invio messaggio 4 al ristorante -> ho intenzione di prendere in carico l'ordine */
+        var = 4;
         FullWrite(sockfd, & var, sizeof(int));
 		
 		/* il ristorante invia l'esito */
         FullRead(sockfd, & verify, sizeof(int)); 
 		
-        if (verify == 0) { //riceve 1 se un'ordine è ancora disponibile, 0 in caso contrario
+        if (verify == 2) { //riceve 1 se un'ordine è ancora disponibile, 2 in caso contrario
             printf("Non è stato possibile prendere in carico un ordine\n");
             continue; // riparte dalla scelta degli ordini
         }
@@ -125,9 +125,9 @@ int main(int argc, char ** argv) {
 		sleep(5);
 		
 		
-//->	2
-		/* invio messaggio 2 al ristorante -> ho consegnato l'ordine */		
-		var = 2;
+//->	5
+		/* invio messaggio 5 al ristorante -> ho consegnato l'ordine */		
+		var = 5;
         FullWrite(sockfd, & var, sizeof(int));
         printf("Consegna effettuata al cliente %s.\n", id_cliente);
         

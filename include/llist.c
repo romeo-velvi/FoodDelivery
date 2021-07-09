@@ -277,8 +277,8 @@ Operazione* create_Operazione (char *n, int a, int b, int c){
     return p;
 }
 
-Info_ordini* create_Info_ordini (list *l, char *c, int s, int x){
-    Info_ordini* p = (Info_ordini*) malloc(sizeof(Info_ordini));
+Info_ordine* create_Info_ordine (list *l, char *c, int s, int x){
+    Info_ordine* p = (Info_ordine*) malloc(sizeof(Info_ordine));
 	strcpy(p->id_operazione,c);
     p->ordini=l;
     p->stato_ordine=s;
@@ -323,8 +323,8 @@ void free_Operazione(void*data){
     free(p);
 }
 
-void free_Info_ordini(void*data){
-	Info_ordini *p = (Info_ordini*) data;
+void free_Info_ordine(void*data){
+	Info_ordine *p = (Info_ordine*) data;
     free(p);
 }
 
@@ -377,10 +377,10 @@ void print_struct_Operazione(void*st){
     printf("fd_client:%d, fd_ristorante:%d, stato:%d\n",tmp->fd_client,tmp->fd_ristorante,tmp->stato_operazione);
 }
 
-void print_struct_Info_ordini(void*st){
+void print_struct_Info_ordine(void*st){
     if (st == NULL) 
         return;
-    Info_ordini *lo = (Info_ordini*)st;
+    Info_ordine *lo = (Info_ordine*)st;
 	list*l=(list*)lo->ordini;
 	node*tmp=l->head;
 	printf("\nStato ordine: %d\n",lo->stato_ordine);
@@ -465,25 +465,28 @@ list* show_choose_product(list* llist){
 	
     int cnt=size(llist);
 	char *ar[cnt];
-    node* llnode = llist->head;
-    // mostro i Ristorante
-    Prodotto *r;
-    for (int i=0;i<cnt && llnode != NULL;i++) {
-    	r=(Prodotto*)llnode->data;
-    	fflush(stdin);
-    	printf("[%d] %s %.2f\n",i,r->items,r->prezzo);
-    	ar[i]=malloc(sizeof(char)*max_name);
-    	ar[i]=r->items;
-		llnode = llnode->next;
-    }
+    
     // scelgo Ristorante
     list* l=create_list();
     int scelta;
     int opzione;
     int qt;
     int loop=1;
+
     while(loop){
-    	
+        system("clear");
+    	node* llnode = llist->head;
+        // mostro i Ristorante
+        Prodotto *r;
+        for (int i=0;i<cnt && llnode != NULL;i++) {
+            r=(Prodotto*)llnode->data;
+            fflush(stdin);
+            printf("[%d] %s %.2f\n",i,r->items,r->prezzo);
+            ar[i]=malloc(sizeof(char)*max_name);
+            ar[i]=r->items;
+            llnode = llnode->next;
+        }
+
     	printf("\nInserire [1] per scegliere un prodotto.\nInserire [2] per uscire\n->  ");
 		scanf("%d",&scelta);
 		if(scelta==1){
@@ -498,15 +501,15 @@ list* show_choose_product(list* llist){
 
 			}
 			else{
-				printf("\nID prodotto inserito non valido!");
+				printf("\nID prodotto inserito non valido!\n");
 			}
 		}
 		else if(scelta==2){
-			printf("\nOrdine composto!");
+			printf("\nOrdine composto!\n");
 			loop=0;
 		}
 		else{
-			printf("\nComando non valido");	
+			printf("\nComando non valido\n");	
 		}
 	}
 	return l;
@@ -518,7 +521,7 @@ list* show_choose_product(list* llist){
 char *rand_string(char *str, size_t size)
 {
 	srand(time(NULL));
-    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK12345";
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK1234567890";
     if (size) {
         --size;
         for (size_t n = 0; n < size; n++) {
@@ -643,21 +646,21 @@ node* find_id_operation_node(list*l, char*id){
 
 
 
-Info_ordini* find_l_ordine(list*l, char *id){
+Info_ordine* find_l_ordine(list*l, char *id){
 	
 	if(l==NULL)
-		return (Info_ordini*)NULL;
+		return (Info_ordine*)NULL;
 	node*n=l->head;
-	Info_ordini *r;
+	Info_ordine *r;
 	while(n!=NULL){
-		r=(Info_ordini*)n->data;
+		r=(Info_ordine*)n->data;
 		if(strcmp(r->id_operazione,id)==0){
 			return r;
 		}
 		n=n->next;
 	}
 	printf("\n--------->Nodo non trovato\n");
-	return (Info_ordini*)NULL;
+	return (Info_ordine*)NULL;
 }
 
 

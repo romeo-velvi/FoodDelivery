@@ -33,18 +33,18 @@ typedef struct llist
 /* STRUCT PROTOCLLO */
 
 typedef struct Prodotto{
-	char items[max_name]; // oggetti nel menu (vedere il passaggio da [] a * nell'inizio di ristorante {quando fa il Menu statico})
+	char items[max_name];
 	float prezzo;
 }Prodotto;
 
-typedef struct n_q{
+typedef struct Ordine{
 	char items[max_name];
 	int qt;
 } Ordine;
 
 typedef struct ristorante{
 	char nome_rist[max_name];
-	int fd_rist; // quando invio l'ordine (client-part in server)
+	int fd_rist;
 } Ristorante;
 
 typedef struct rider{
@@ -60,7 +60,7 @@ typedef struct operazione { //Tiene traccia delle richieste client-ristorante ne
     int stato_operazione; 
 	/*
 		SE LO STATO E UGUALE A:
-			1:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa Operazione del menu ricevuto dal ristorante.
+			1:  ->  per indicare che server prende un qualsiasi client (indicato dal campo "client") che fa richiesta del menu ricevuto dal ristorante.
 			2:  ->	per indicare che il serve prende il ristorante (indicato dal campo "ristorante") e gli inoltre l'ordine ricevuto dal client.
 			3:  ->  per indicare che il serve prende il client (indicato dal campo "client") e gli inoltre l'id del rider ricevuto dal ristorante.
 			4:  ->  vuol dire che l'ordine è in fase di consegna
@@ -68,18 +68,18 @@ typedef struct operazione { //Tiene traccia delle richieste client-ristorante ne
 } Operazione;
 
 
-typedef struct info_ordini{
+typedef struct Info_ordine{
 	list* ordini;
 	char id_operazione[id_size]; //per identificarla nel server.
 	int fd_rider; // rider che effettuerà la consegna
 	int stato_ordine;
 	/*
 		SE LO STATO E UGUALE A:
-		0: -> ordine nuovo
-		1: -> ordine assegnato
-		2: -> ordine consegnato
+		1: -> ordine nuovo
+		2: -> ordine assegnato
+		3: -> ordine consegnato
 	*/
-} Info_ordini;
+} Info_ordine;
 
 
 /***************************************************
@@ -130,7 +130,7 @@ Ristorante* create_Ristorante (char*nome_R, int fd_rist);
 Ordine* create_Ordine (char*items,int qt);
 Rider* create_Rider (char*id_rider, int fd_rider);
 Operazione* create_Operazione(char *n, int a, int b, int c);
-Info_ordini* create_Info_ordini(list*l, char *c, int s, int fd_rider);
+Info_ordine* create_Info_ordine(list*l, char *c, int s, int fd_rider);
 
 // funzioni per cancellare gli oggetti
 void free_Prodotto(void*data);
@@ -138,7 +138,7 @@ void free_Ristorante(void*data);
 void free_Ordine(void*data);
 void free_Rider(void*data);
 void free_Operazione(void*data);
-void free_Info_ordini(void *data);
+void free_Info_ordine(void *data);
 
 // funzioni per stampare i risultati dei dati passati
 void print_struct_Prodotto(void*data);
@@ -146,7 +146,7 @@ void print_struct_Ristorante(void*data);
 void print_struct_Ordine(void*data);
 void print_struct_Rider(void*data);
 void print_struct_Operazione(void*data);
-void print_struct_Info_ordini(void*data);
+void print_struct_Info_ordine(void*data);
 
 
 
@@ -179,7 +179,7 @@ Operazione* find_id_operation(list *l, char*id);
 node* find_id_operation_node(list*l, char*id);
 
 // cerca tra i l_o con fd pari a quello dato come argomento.
-Info_ordini* find_l_ordine(list*l, char *id);
+Info_ordine* find_l_ordine(list*l, char *id);
 
 //* FULL READ & FULL WRITE*//
 void FullRead(int fd, void * buf, size_t count); //funzione per la gestione del valore di ritorno nella fullRead
