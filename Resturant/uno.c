@@ -9,13 +9,14 @@
 #include <signal.h>
 #include "../include/llist.h"
 
+
+int serv;
+
 void before_close(int sig) {
     int var = 10;
     FullWrite(serv, & var, sizeof(int));
     exit(0);
 }
-
-int serv;
 
 int main(int argc, char ** argv) {
 

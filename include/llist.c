@@ -231,13 +231,6 @@ void traverse(list* llist, void (*do_func)(void *))
 
 
 
-Info* create_Info(int id, int fd, char*c){
-    Info* p = (Info*) malloc(sizeof(Info));
-    p->id = id;
-    p->fd = fd;
-    p->c = c;
-    return p;
-}
 
 Prodotto* create_Prodotto (char *items, float prezzo){
     Prodotto* p = (Prodotto*) malloc(sizeof(Prodotto));
@@ -301,13 +294,6 @@ Info_ordini* create_Info_ordini (list *l, char *c, int s, int x){
 
 
 
-
-void free_Info(void* data)
-{
-    Info *p = (Info*) data;
-    free(p);
-}
-
 void free_Prodotto(void*data){
 	Prodotto *p = (Prodotto*) data;
     free(p);
@@ -349,15 +335,6 @@ void free_Info_ordini(void*data){
 
 
 
-
-
-void print_struct_Info(void *st)
-{
-    if (st == NULL) 
-        return;
-    Info *tmp = (Info*)st;
-    printf("\n id:%d, ex/fd:%d, string:%s\n",tmp->id, tmp->fd, tmp->c);
-}
 
 void print_struct_Prodotto(void*st){
     if (st == NULL) 
@@ -593,7 +570,7 @@ node* find_resturant_by_fd (list*l,int fd_rist){
 
 
 
-Operazione* find_resturant_request(list *l,int fd,int st){
+Operazione* find_resturant_operation(list *l,int fd,int st){
 	if(l==NULL)
 		return (Operazione*)NULL;
 	node*n=l->head;
@@ -612,7 +589,7 @@ Operazione* find_resturant_request(list *l,int fd,int st){
 
 
 
-Operazione* find_client_request(list *l,int fd,int st){
+Operazione* find_client_operation(list *l,int fd,int st){
 	if(l==NULL)
 		return (Operazione*)NULL;
 	node*n=l->head;
@@ -630,7 +607,7 @@ Operazione* find_client_request(list *l,int fd,int st){
 
 
 
-Operazione* find_id_request(list *l,char* id){
+Operazione* find_id_operation(list *l,char* id){
 	if(l==NULL)
 		return (Operazione*)NULL;
 	node*n=l->head;
@@ -648,7 +625,7 @@ Operazione* find_id_request(list *l,char* id){
 
 
 
-node* find_id_request_node(list*l, char*id){
+node* find_id_operation_node(list*l, char*id){
 	if(l==NULL)
 		return (node*)NULL;
 	node*n=l->head;
