@@ -59,8 +59,7 @@ int main(int argc, char ** argv) {
 	int servfd;
     if ((servfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         fprintf(stderr, "socket error, Assegnazione automatica\n");
-        //exit(1);
-		argv[1]="127.0.0.1";
+        exit(1);
     }
 	struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
@@ -93,7 +92,7 @@ int main(int argc, char ** argv) {
    	list* riders = create_list(); //alloco lista per i riders
 
 	char nome_rist[max_name];
-	strcpy(nome_rist,"Palapizza");
+	strcpy(nome_rist,"Nonna Ma");
  
 
    	list *menu=create_list(); //alloco lista per il menu
@@ -101,15 +100,15 @@ int main(int argc, char ** argv) {
 	int n_items=5;
 	char *items[n_items];
 	float prezzo[n_items];
-	items[0]="cocacol";	
-	items[1]="purpett";
-	items[2]="patan";
-	items[3]="zampon";
-	items[4]="zeppl";
-	prezzo[0]=1.5;
-	prezzo[1]=3.5;
-	prezzo[2]=4.0;
-	prezzo[3]=1.0;
+	items[0]="Patatine fritte";	
+	items[1]="Pizza margherita";
+	items[2]="Pasta e patate";
+	items[3]="Cocacola";
+	items[4]="Fanta";
+	prezzo[0]=3.5;
+	prezzo[1]=9.5;
+	prezzo[2]=5.0;
+	prezzo[3]=2.0;
 	prezzo[4]=1.5;
 
 	for (int i=0;i<n_items;i++)
@@ -399,7 +398,7 @@ int main(int argc, char ** argv) {
 						printf("Ordine %s effettuato dal rider: %s, al cliente %s.\n",id_operazione, id_rider, id_client);
 						
 						/* trovo l'ordine in questione e lo setto come consegnato */
-						lo=find_Info_ordine(order_info,id_operazione);
+						lo=find_l_ordine(order_info,id_operazione);
 						lo->stato_ordine=3; 
 						
 						break;

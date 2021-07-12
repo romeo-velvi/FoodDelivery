@@ -24,7 +24,7 @@ int main(int argc, char ** argv) {
 /* #######################_COLLEGAMENTO SERVER_########################## */
 
     if (argc != 2) {
-        fprintf(stderr, "usage: %s <IPaddress>\n Assegnazione automatica\n\n", argv[0]);
+        fprintf(stderr, "usare: %s <IPaddress>\n Assegnazione automatica\n\n", argv[0]);
         //exit(1);
 		argv[1]="127.0.0.1";
     }

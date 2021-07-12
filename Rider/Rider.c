@@ -14,7 +14,7 @@ int main(int argc, char ** argv) {
 	
 /* ##################_INZIO COLLEGAMENTO RISTORANTE_########################## */
     if (argc != 3) {
-        fprintf(stderr, "usage: %s <IPaddress> and <port>\n", argv[0]);
+       	fprintf(stderr, "usare: %s <IPaddress> and <port>. Assegnazione automatica.\n", argv[0]);
         //exit(1);
 		argv[1]="127.0.0.1";
 		argv[2]="1025";
