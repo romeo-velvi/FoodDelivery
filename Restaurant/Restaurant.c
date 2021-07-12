@@ -29,7 +29,7 @@ int main(int argc, char ** argv) {
 
     struct sockaddr_in serv_add;
     serv_add.sin_family = AF_INET;
-    serv_add.sin_port = htons(1026); // port 1026
+    serv_add.sin_port = htons(1025); // port 1025
     serv_add.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int enable = 1;
@@ -92,7 +92,7 @@ int main(int argc, char ** argv) {
    	list* riders = create_list(); //alloco lista per i riders
 
 	char nome_rist[max_name];
-	strcpy(nome_rist,"Antica pizzeria");
+	strcpy(nome_rist,"Nonna Ma");
  
 
    	list *menu=create_list(); //alloco lista per il menu
@@ -100,11 +100,11 @@ int main(int argc, char ** argv) {
 	int n_items=5;
 	char *items[n_items];
 	float prezzo[n_items];
-	items[0]="Pizza fritta al pomodoro";	
+	items[0]="Patatine fritte";	
 	items[1]="Pizza margherita";
-	items[2]="Pizza marinara";
-	items[3]="Pizza 4 stagioni";
-	items[4]="Birra artigianale";
+	items[2]="Pasta e patate";
+	items[3]="Cocacola";
+	items[4]="Fanta";
 	prezzo[0]=3.5;
 	prezzo[1]=9.5;
 	prezzo[2]=5.0;
@@ -398,7 +398,7 @@ int main(int argc, char ** argv) {
 						printf("Ordine %s effettuato dal rider: %s, al cliente %s.\n",id_operazione, id_rider, id_client);
 						
 						/* trovo l'ordine in questione e lo setto come consegnato */
-						lo=find_l_ordine(order_info,id_operazione);
+						lo=find_Info_ordine(order_info,id_operazione);
 						lo->stato_ordine=3; 
 						
 						break;
