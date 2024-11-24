@@ -1,7 +1,7 @@
 # Food Delivery Project
 
 ## Scopo del progetto
-Questo progetto nasce con lo scopo di fornire una struttra base di comunicazione astratta (basata su socket) che permette il rider-delivery di servizi ed elementi (in questo caso, cibo).
+Questo progetto nasce con lo scopo di fornire una struttra base di comunicazione astratta (basata su socket) che permette il rider-delivery di servizi ed elementi (in questo caso, di alimenti).
 
 ## Descrizione del Progetto
 Il progetto consiste nella progettazione e implementazione di un servizio di food delivery. Il client si collega al server per ricevere la lista dei ristoranti disponibili. L'utente sceglie un ristorante tramite l'interfaccia del client, effettua un ordine e il server gestisce la comunicazione tra il ristorante e i rider per la consegna.
