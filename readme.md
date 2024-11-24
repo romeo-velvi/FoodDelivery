@@ -3,6 +3,8 @@
 ## Descrizione del Progetto
 Il progetto consiste nella progettazione e implementazione di un servizio di food delivery. Il client si collega al server per ricevere la lista dei ristoranti disponibili. L'utente sceglie un ristorante tramite l'interfaccia del client, effettua un ordine e il server gestisce la comunicazione tra il ristorante e i rider per la consegna.
 
+Questo sistema nasce come progetto per il corso universitario "reti di calcolatori".  
+
 ## Tecnologie Utilizzate
 - **Linguaggio**: C
 - **Comunicazione**: Socket per la comunicazione tra processi
